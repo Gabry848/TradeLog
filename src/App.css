@@ -1,0 +1,482 @@
+/* App Styles */
+.app {
+  min-height: 100vh;
+  background-color: #2a2d35;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: #1e2025;
+  border-bottom: 1px solid #3a3d45;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.nav {
+  display: flex;
+  gap: 0;
+}
+
+.nav-button {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+}
+
+.nav-button:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-button.active {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #6b7280;
+  cursor: pointer;
+}
+
+/* Main Content */
+.main {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3a3d45;
+  position: relative;
+}
+
+.metric-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.metric-value.positive {
+  color: #10b981;
+}
+
+.metric-value.negative {
+  color: #ef4444;
+}
+
+.chart-container {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 120px;
+  height: 60px;
+}
+
+.equity-chart {
+  width: 100%;
+  height: 100%;
+}
+
+/* Equity Section */
+.equity-section {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #3a3d45;
+}
+
+.equity-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.equity-chart-large {
+  height: 200px;
+}
+
+.equity-chart-large svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Trades Section */
+.trades-section {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3a3d45;
+}
+
+.trades-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.trades-table {
+  width: 100%;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.8fr 0.8fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #3a3d45;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.8fr 0.8fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(58, 61, 69, 0.3);
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.positive {
+  color: #10b981;
+}
+
+.negative {
+  color: #ef4444;
+}
+
+/* Trades Page */
+.trades-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Filters Section */
+.filters-section {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3a3d45;
+}
+
+.filters-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 0.75rem;
+  background-color: #2a2d35;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.filter-group input::placeholder {
+  color: #6b7280;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: end;
+}
+
+.clear-filters-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+/* Full Trades Table */
+.trades-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.trades-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.trades-table-full {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-header-full {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.8fr 0.8fr 1fr 0.8fr 1fr 1.2fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #3a3d45;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 600;
+  background-color: rgba(26, 27, 30, 0.5);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-header-full .sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.table-header-full .sortable:hover {
+  color: #ffffff;
+}
+
+.table-row-full {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.8fr 0.8fr 1fr 0.8fr 1fr 1.2fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(58, 61, 69, 0.3);
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+  align-items: center;
+}
+
+.table-row-full:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.table-row-full:last-child {
+  border-bottom: none;
+}
+
+.symbol {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.trade-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.trade-type.buy {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.trade-type.sell {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.strategy {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+/* Coming Soon */
+.coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background-color: #1e2025;
+  border-radius: 12px;
+  border: 1px solid #3a3d45;
+}
+
+.coming-soon h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  color: #ffffff;
+}
+
+.coming-soon p {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .filters-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  
+  .table-header-full,
+  .table-row-full {
+    grid-template-columns: 1fr 1fr 0.8fr 1fr 1fr;
+    font-size: 0.8rem;
+  }
+  
+  .table-header-full div:nth-child(n+6),
+  .table-row-full div:nth-child(n+6) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+  }
+  
+  .nav {
+    flex-wrap: wrap;
+  }
+  
+  .nav-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .main {
+    padding: 1rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .table-header div:nth-child(n+4),
+  .table-row div:nth-child(n+4) {
+    display: none;
+  }
+  
+  .trades-page {
+    gap: 1rem;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-header-full,
+  .table-row-full {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+  
+  .table-header-full div:nth-child(n+4),
+  .table-row-full div:nth-child(n+4) {
+    display: none;
+  }
+}
