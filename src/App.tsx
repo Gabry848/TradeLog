@@ -83,6 +83,7 @@ function App() {
   const [tradeFields, setTradeFields] = useState<TradeField[]>(defaultTradeFields)
   const [chartConfigs, setChartConfigs] = useState<ChartConfig[]>(defaultChartConfigs)
   const [userTrades, setUserTrades] = useState<Trade[]>([])
+  const [filePath, setFilePath] = useState<string>('tradelog.csv')
   const [filters, setFilters] = useState<FilterState>({
     symbol: '',
     type: '',
@@ -92,9 +93,15 @@ function App() {
     minPnL: '',
     maxPnL: ''
   })
-
   // Carica i dati salvati all'avvio
   useEffect(() => {
+    // Carica il percorso del file salvato
+    const savedFilePath = localStorage.getItem('tradelog_filepath')
+    if (savedFilePath) {
+      setFilePath(savedFilePath)
+    }
+    
+    // Carica i trade salvati
     const savedTrades = localStorage.getItem('tradelog_trades')
     if (savedTrades) {
       try {
@@ -352,10 +359,11 @@ function App() {
 
   const closeChartConfigModal = () => {
     setIsChartConfigModalOpen(false)
-  }
-
-  // Funzioni per gestire i dati CSV/Excel
+  }  // Funzioni per gestire i dati CSV/Excel
   const exportToCSV = () => {
+    // Assicurati che il nome del file sia valido
+    const fileName = filePath.toLowerCase().endsWith('.csv') ? filePath : filePath + '.csv'
+    
     const headers = ['ID', 'Date', 'Symbol', 'Type', 'Quantity', 'Price', 'P&L', 'Fees', 'Strategy']
     const csvContent = [
       headers.join(','),
@@ -376,7 +384,7 @@ function App() {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `tradelog_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', fileName)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
@@ -631,49 +639,7 @@ function App() {
                       strokeWidth="2"
                     />
                   </svg>
-                </div>              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="quick-actions">
-              <h3>Quick Actions</h3>
-              <div className="quick-actions-grid">
-                <button onClick={openAddTradeModal} className="quick-action-btn primary">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                  <span>Add New Trade</span>
-                </button>
-                <button onClick={exportToCSV} className="quick-action-btn secondary">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                    <line x1="9" y1="15" x2="12" y2="12"></line>
-                    <line x1="15" y1="15" x2="12" y2="12"></line>
-                  </svg>
-                  <span>Export Data</span>
-                </button>
-                <label htmlFor="csv-import-dashboard" className="quick-action-btn tertiary">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10,9 9,9 8,9"></polyline>
-                  </svg>
-                  <span>Import Data</span>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={importFromCSV}
-                    style={{ display: 'none' }}
-                    id="csv-import-dashboard"
-                  />
-                </label>
-              </div>
-            </div>
+                </div>              </div>            </div>
 
             {/* Equity Curve */}
             <div className="equity-section">
@@ -984,10 +950,55 @@ function App() {
               </div>
             )}
           </div>
-        )}
-
-        {activeTab === 'Settings' && (
+        )}        {activeTab === 'Settings' && (
           <div className="settings-page">
+            {/* File Path Configuration */}
+            <div className="settings-section">
+              <h3>Data File Configuration</h3>
+              <p>Set the file path where your trade data will be saved and exported.</p>
+              
+              <div className="file-path-config">
+                <div className="form-group">
+                  <label htmlFor="file-path">CSV File Name</label>                  <input
+                    type="text"
+                    id="file-path"
+                    value={filePath}
+                    onChange={(e) => {
+                      let newPath = e.target.value
+                      // Assicurati che il file abbia l'estensione .csv
+                      if (newPath && !newPath.toLowerCase().endsWith('.csv')) {
+                        newPath = newPath.replace(/\.[^/.]+$/, '') + '.csv'
+                      }
+                      setFilePath(newPath)
+                      localStorage.setItem('tradelog_filepath', newPath)
+                    }}
+                    onBlur={(e) => {
+                      // Validazione finale quando l'utente esce dal campo
+                      let finalPath = e.target.value
+                      if (finalPath && !finalPath.toLowerCase().endsWith('.csv')) {
+                        finalPath = finalPath + '.csv'
+                        setFilePath(finalPath)
+                        localStorage.setItem('tradelog_filepath', finalPath)
+                      }
+                    }}
+                    placeholder="e.g. my_trades.csv"
+                    className="file-path-input"
+                  />
+                  <small>Enter the name for your CSV file. File will be downloaded when you export data.</small>
+                </div>
+                
+                <div className="file-info">
+                  <div className="info-item">
+                    <strong>Current file:</strong> {filePath}
+                  </div>
+                  <div className="info-item">
+                    <strong>Storage:</strong> Data is saved locally in your browser and exported to CSV
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Trade Form Configuration */}
             <div className="settings-section">
               <h3>Trade Form Configuration</h3>
               <p>Customize the fields that appear when adding a new trade.</p>
