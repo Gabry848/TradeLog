@@ -16,9 +16,14 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   },
   invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
     const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
-  },
+    return ipcRenderer.invoke(channel, ...omit)  },
 
   // You can expose other APTs you need here.
   // ...
+})
+
+// Expose APIs for file system operations
+contextBridge.exposeInMainWorld('electronAPI', {
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
+  saveFile: (data: string, filePath: string) => ipcRenderer.invoke('save-file', data, filePath),
 })

@@ -1267,7 +1267,44 @@
 .file-path-config {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
+}
+
+.destination-path-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.destination-path-group .file-path-input {
+  flex: 1;
+}
+
+.browse-folder-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #646cff;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.browse-folder-btn:hover {
+  background-color: #535bf2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+}
+
+.browse-folder-btn:active {
+  transform: translateY(0);
 }
 
 .file-path-input {
@@ -1279,7 +1316,7 @@
   font-size: 0.95rem;
   transition: border-color 0.2s ease;
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
 }
 
 .file-path-input:focus {
@@ -1304,7 +1341,7 @@
   background-color: #2a2d35;
   border: 1px solid #3a3d45;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -1312,22 +1349,38 @@
 
 .info-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.9rem;
   color: #e5e7eb;
+  line-height: 1.4;
 }
 
 .info-item strong {
   color: #ffffff;
   font-weight: 600;
   min-width: 100px;
+  flex-shrink: 0;
 }
 
 /* File Path Responsive */
 @media (max-width: 768px) {
+  .file-path-config {
+    gap: 1.5rem;
+  }
+  
+  .destination-path-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .file-path-input {
+    max-width: none;
+  }
+  
   .file-info {
-    padding: 0.75rem;
+    padding: 1rem;
   }
   
   .info-item {
@@ -1339,4 +1392,45 @@
   .info-item strong {
     min-width: auto;
   }
+}
+
+/* Help Box */
+.help-box {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+  border: 1px solid #4338ca;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.help-box h4 {
+  margin: 0 0 0.75rem 0;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.help-box ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.help-box li {
+  color: #e0e7ff;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.help-box li:last-child {
+  margin-bottom: 0;
+}
+
+.help-box strong {
+  color: #ffffff;
+  font-weight: 600;
 }

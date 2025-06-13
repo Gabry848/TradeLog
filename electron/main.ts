@@ -1,7 +1,8 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs/promises'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -66,3 +67,21 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(createWindow)
+
+// IPC handlers for file system operations
+ipcMain.handle('select-folder', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  return result
+})
+
+ipcMain.handle('save-file', async (_event, data: string, filePath: string) => {
+  try {
+    await fs.writeFile(filePath, data, 'utf8')
+    return { success: true }
+  } catch (error) {
+    console.error('Error saving file:', error)
+    throw error
+  }
+})

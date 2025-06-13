@@ -1,6 +1,16 @@
 import { useState, useMemo, useEffect } from 'react'
 import './App.css'
 
+// Dichiarazione per l'API Electron
+declare global {
+  interface Window {
+    electronAPI?: {
+      selectFolder: () => Promise<{ canceled: boolean; filePaths: string[] }>
+      saveFile: (data: string, filePath: string) => Promise<void>
+    }
+  }
+}
+
 interface Trade {
   id: number
   date: string
@@ -84,6 +94,7 @@ function App() {
   const [chartConfigs, setChartConfigs] = useState<ChartConfig[]>(defaultChartConfigs)
   const [userTrades, setUserTrades] = useState<Trade[]>([])
   const [filePath, setFilePath] = useState<string>('tradelog.csv')
+  const [destinationPath, setDestinationPath] = useState<string>('')
   const [filters, setFilters] = useState<FilterState>({
     symbol: '',
     type: '',
@@ -92,13 +103,18 @@ function App() {
     dateTo: '',
     minPnL: '',
     maxPnL: ''
-  })
-  // Carica i dati salvati all'avvio
+  })  // Carica i dati salvati all'avvio
   useEffect(() => {
     // Carica il percorso del file salvato
     const savedFilePath = localStorage.getItem('tradelog_filepath')
     if (savedFilePath) {
       setFilePath(savedFilePath)
+    }
+    
+    // Carica il percorso di destinazione salvato
+    const savedDestinationPath = localStorage.getItem('tradelog_destination_path')
+    if (savedDestinationPath) {
+      setDestinationPath(savedDestinationPath)
     }
     
     // Carica i trade salvati
@@ -356,11 +372,54 @@ function App() {
   const openChartConfigModal = () => {
     setIsChartConfigModalOpen(true)
   }
-
   const closeChartConfigModal = () => {
     setIsChartConfigModalOpen(false)
-  }  // Funzioni per gestire i dati CSV/Excel
-  const exportToCSV = () => {
+  }
+  // Funzione per aprire il dialogo di selezione cartella
+  const selectDestinationFolder = async () => {
+    // Verifica se siamo in un ambiente Electron
+    if (window.electronAPI && window.electronAPI.selectFolder) {
+      try {
+        const result = await window.electronAPI.selectFolder()
+        if (result && !result.canceled && result.filePaths.length > 0) {
+          const selectedPath = result.filePaths[0]
+          setDestinationPath(selectedPath)
+          localStorage.setItem('tradelog_destination_path', selectedPath)
+        }
+      } catch (error) {
+        console.error('Error selecting folder:', error)
+        // Fallback al prompt se c'è un errore
+        selectDestinationFolderFallback()
+      }
+    } else {
+      // Fallback per browser web
+      selectDestinationFolderFallback()
+    }
+  }
+  const selectDestinationFolderFallback = () => {
+    const newPath = prompt(
+      'Inserisci il percorso della cartella di destinazione:\n(Es: C:\\Users\\Username\\Documents\\Trading)',
+      destinationPath || ''
+    )
+    
+    if (newPath !== null) {
+      setDestinationPath(newPath)
+      localStorage.setItem('tradelog_destination_path', newPath)
+    }
+  }
+
+  // Funzione per costruire il percorso completo del file
+  const getFullFilePath = () => {
+    if (!destinationPath) return filePath
+    
+    const separator = destinationPath.includes('/') ? '/' : '\\'
+    const cleanDestination = destinationPath.endsWith('/') || destinationPath.endsWith('\\') 
+      ? destinationPath.slice(0, -1) 
+      : destinationPath
+    
+    return `${cleanDestination}${separator}${filePath}`
+  }// Funzioni per gestire i dati CSV/Excel
+  const exportToCSV = async () => {
     // Assicurati che il nome del file sia valido
     const fileName = filePath.toLowerCase().endsWith('.csv') ? filePath : filePath + '.csv'
     
@@ -378,8 +437,20 @@ function App() {
         trade.fees,
         trade.strategy
       ].join(','))
-    ].join('\n')
+    ].join('\n')    // Se siamo in Electron e abbiamo un percorso di destinazione, salva direttamente
+    if (window.electronAPI && window.electronAPI.saveFile && destinationPath) {
+      try {
+        const fullPath = getFullFilePath()
+        await window.electronAPI.saveFile(csvContent, fullPath)
+        alert(`File salvato con successo in: ${fullPath}`)
+        return
+      } catch (error) {
+        console.error('Error saving file directly:', error)
+        alert('Errore nel salvare il file direttamente. Verrà utilizzato il download normale.')
+      }
+    }
 
+    // Fallback per browser web o se il salvataggio diretto fallisce
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
@@ -953,13 +1024,22 @@ function App() {
         )}        {activeTab === 'Settings' && (
           <div className="settings-page">
             {/* File Path Configuration */}
-            <div className="settings-section">
-              <h3>Data File Configuration</h3>
+            <div className="settings-section">              <h3>Data File Configuration</h3>
               <p>Set the file path where your trade data will be saved and exported.</p>
+              
+              <div className="help-box">
+                <h4>💡 How it works:</h4>
+                <ul>
+                  <li><strong>Web Browser:</strong> Files are downloaded to your default download folder</li>
+                  <li><strong>Electron App:</strong> Files are saved directly to the specified destination folder</li>
+                  <li><strong>Auto-save:</strong> Each new trade is automatically saved to the configured location</li>
+                </ul>
+              </div>
               
               <div className="file-path-config">
                 <div className="form-group">
-                  <label htmlFor="file-path">CSV File Name</label>                  <input
+                  <label htmlFor="file-path">CSV File Name</label>
+                  <input
                     type="text"
                     id="file-path"
                     value={filePath}
@@ -986,10 +1066,43 @@ function App() {
                   />
                   <small>Enter the name for your CSV file. File will be downloaded when you export data.</small>
                 </div>
+
+                <div className="form-group">
+                  <label htmlFor="destination-path">Destination Folder</label>
+                  <div className="destination-path-group">
+                    <input
+                      type="text"
+                      id="destination-path"
+                      value={destinationPath}
+                      onChange={(e) => {
+                        setDestinationPath(e.target.value)
+                        localStorage.setItem('tradelog_destination_path', e.target.value)
+                      }}
+                      placeholder="e.g. C:\Users\Username\Documents\Trading"
+                      className="file-path-input"
+                    />
+                    <button 
+                      onClick={selectDestinationFolder} 
+                      className="browse-folder-btn"
+                      title="Browse for folder"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      Browse
+                    </button>
+                  </div>
+                  <small>Specify the folder where CSV files will be saved. Leave empty to use default download folder.</small>
+                </div>
                 
                 <div className="file-info">
                   <div className="info-item">
                     <strong>Current file:</strong> {filePath}
+                  </div>
+                  <div className="info-item">
+                    <strong>Destination:</strong> {destinationPath || 'Default download folder'}
+                  </div>                  <div className="info-item">
+                    <strong>Full path:</strong> {getFullFilePath()}
                   </div>
                   <div className="info-item">
                     <strong>Storage:</strong> Data is saved locally in your browser and exported to CSV
