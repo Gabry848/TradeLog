@@ -36,6 +36,26 @@ interface NewTradeData {
   fees: string | null
 }
 
+interface TradeField {
+  id: string
+  label: string
+  type: 'text' | 'number' | 'date' | 'select'
+  required: boolean
+  placeholder?: string
+  options?: string[]
+  enabled: boolean
+}
+
+const defaultTradeFields: TradeField[] = [
+  { id: 'symbol', label: 'Symbol', type: 'text', required: true, placeholder: 'e.g. AAPL', enabled: true },
+  { id: 'type', label: 'Type', type: 'select', required: true, options: ['Buy', 'Sell'], enabled: true },
+  { id: 'qty', label: 'Quantity', type: 'number', required: true, placeholder: '100', enabled: true },
+  { id: 'price', label: 'Price', type: 'number', required: true, placeholder: '150.00', enabled: true },
+  { id: 'date', label: 'Date', type: 'date', required: true, enabled: true },
+  { id: 'strategy', label: 'Strategy', type: 'text', required: false, placeholder: 'e.g. Momentum', enabled: true },
+  { id: 'fees', label: 'Fees', type: 'number', required: false, placeholder: '9.95', enabled: true },
+]
+
 const allTrades: Trade[] = [
   { id: 1, date: '2024-04-12', symbol: 'AMZN', type: 'Buy', qty: 10, price: 3200.0, pnl: 500.0, fees: 12.50, strategy: 'Momentum' },
   { id: 2, date: '2024-04-11', symbol: 'TSLA', type: 'Sell', qty: 5, price: 190.00, pnl: -1550.0, fees: 8.75, strategy: 'Scalping' },
@@ -54,6 +74,8 @@ function App() {
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false)
+  const [isNewFieldModalOpen, setIsNewFieldModalOpen] = useState(false)
+  const [tradeFields, setTradeFields] = useState<TradeField[]>(defaultTradeFields)
   const [filters, setFilters] = useState<FilterState>({
     symbol: '',
     type: '',
@@ -122,16 +144,56 @@ function App() {
   const openAddTradeModal = () => {
     setIsAddTradeModalOpen(true)
   }
-
   const closeAddTradeModal = () => {
     setIsAddTradeModalOpen(false)
   }
+
   const handleAddTrade = (tradeData: NewTradeData) => {
     // Demo: qui in futuro aggiungeremo il trade ai dati
     console.log('Adding trade:', tradeData)
     setIsAddTradeModalOpen(false)
     // Mostra notifica di successo (demo)
     alert('Trade aggiunto con successo! (Demo)')
+  }
+  // Funzioni per gestire la configurazione dei campi
+  const updateField = (fieldId: string, updates: Partial<TradeField>) => {
+    setTradeFields(fields => 
+      fields.map(field => 
+        field.id === fieldId ? { ...field, ...updates } : field
+      )
+    )
+  }
+
+  const openNewFieldModal = () => {
+    setIsNewFieldModalOpen(true)
+  }
+
+  const closeNewFieldModal = () => {
+    setIsNewFieldModalOpen(false)
+  }
+
+  const addNewField = (fieldData: Omit<TradeField, 'id'>) => {
+    const newId = `custom_${Date.now()}`
+    const newField: TradeField = {
+      id: newId,
+      ...fieldData
+    }
+    setTradeFields(fields => [...fields, newField])
+    setIsNewFieldModalOpen(false)
+  }
+
+  const removeField = (fieldId: string) => {
+    // Non permettere la rimozione dei campi core
+    const coreFields = ['symbol', 'type', 'qty', 'price', 'date']
+    if (coreFields.includes(fieldId)) {
+      alert('Cannot remove core fields')
+      return
+    }
+    setTradeFields(fields => fields.filter(field => field.id !== fieldId))
+  }
+
+  const resetFieldsToDefault = () => {
+    setTradeFields([...defaultTradeFields])
   }
 
   const formatDate = (dateString: string) => {
@@ -386,13 +448,123 @@ function App() {
             <h3>Analysis</h3>
             <p>Coming soon...</p>
           </div>
+        )}        {activeTab === 'Settings' && (
+          <div className="settings-page">
+            <div className="settings-section">
+              <h3>Trade Form Configuration</h3>
+              <p>Customize the fields that appear when adding a new trade.</p>
+                <div className="settings-actions">
+                <button onClick={openNewFieldModal} className="add-field-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Field
+                </button>
+                <button onClick={resetFieldsToDefault} className="reset-fields-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M3 21v-5h5"></path>
+                  </svg>
+                  Reset to Default
+                </button>
+              </div>              <div className="fields-list">
+                {tradeFields.map((field) => (
+                  <div key={field.id} className="field-config">
+                    <div className="field-header">
+                      <div className="field-info">
+                        <input
+                          type="text"
+                          value={field.label}
+                          onChange={(e) => updateField(field.id, { label: e.target.value })}
+                          className="field-label-input"
+                          placeholder="Field Label"
+                        />
+                        <span className="field-id">({field.id})</span>
+                      </div>
+                      <div className="field-controls">
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={field.enabled}
+                            onChange={(e) => updateField(field.id, { enabled: e.target.checked })}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                        {!['symbol', 'type', 'qty', 'price', 'date'].includes(field.id) && (
+                          <button
+                            onClick={() => removeField(field.id)}
+                            className="remove-field-btn"
+                            title="Remove field"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="field-options">
+                      <div className="field-option">
+                        <label>Type:</label>
+                        <select
+                          value={field.type}
+                          onChange={(e) => updateField(field.id, { type: e.target.value as TradeField['type'] })}
+                          disabled={['symbol', 'type', 'qty', 'price', 'date'].includes(field.id)}
+                        >
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                          <option value="date">Date</option>
+                          <option value="select">Select</option>
+                        </select>
+                      </div>
+                      
+                      <div className="field-option">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={field.required}
+                            onChange={(e) => updateField(field.id, { required: e.target.checked })}
+                            disabled={['symbol', 'type', 'qty', 'price', 'date'].includes(field.id)}
+                          />
+                          Required
+                        </label>
+                      </div>
+                      
+                      <div className="field-option">
+                        <label>Placeholder:</label>
+                        <input
+                          type="text"
+                          value={field.placeholder || ''}
+                          onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+                          placeholder="Enter placeholder text"
+                        />
+                      </div>
+                      
+                      {field.type === 'select' && (
+                        <div className="field-option">
+                          <label>Options (comma separated):</label>
+                          <input
+                            type="text"
+                            value={field.options?.join(', ') || ''}
+                            onChange={(e) => updateField(field.id, { 
+                              options: e.target.value.split(',').map(opt => opt.trim()).filter(Boolean)
+                            })}
+                            placeholder="Option 1, Option 2, Option 3"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
-
-        {activeTab === 'Settings' && (
-          <div className="coming-soon">
-            <h3>Settings</h3>
-            <p>Coming soon...</p>
-          </div>        )}
       </main>
 
       {/* Add Trade Modal */}
@@ -422,38 +594,30 @@ function App() {
               handleAddTrade(tradeData)
             }}>
               <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="symbol">Symbol *</label>
-                  <input type="text" id="symbol" name="symbol" placeholder="e.g. AAPL" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="type">Type *</label>
-                  <select id="type" name="type" required>
-                    <option value="">Select type</option>
-                    <option value="Buy">Buy</option>
-                    <option value="Sell">Sell</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="qty">Quantity *</label>
-                  <input type="number" id="qty" name="qty" min="1" placeholder="100" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="price">Price *</label>
-                  <input type="number" id="price" name="price" step="0.01" min="0" placeholder="150.00" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="date">Date *</label>
-                  <input type="date" id="date" name="date" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="strategy">Strategy</label>
-                  <input type="text" id="strategy" name="strategy" placeholder="e.g. Momentum" />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="fees">Fees</label>
-                  <input type="number" id="fees" name="fees" step="0.01" min="0" placeholder="9.95" />
-                </div>
+                {tradeFields.filter(field => field.enabled).map((field) => (
+                  <div key={field.id} className="form-group">
+                    <label htmlFor={field.id}>
+                      {field.label} {field.required && '*'}
+                    </label>
+                    {field.type === 'select' ? (
+                      <select id={field.id} name={field.id} required={field.required}>
+                        <option value="">Select {field.label.toLowerCase()}</option>
+                        {field.options?.map(option => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
+                        id={field.id}
+                        name={field.id}
+                        placeholder={field.placeholder}
+                        required={field.required}
+                        {...(field.type === 'number' ? { step: field.id === 'qty' ? '1' : '0.01', min: '0' } : {})}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
               <div className="form-actions">
                 <button type="button" onClick={closeAddTradeModal} className="cancel-btn">
@@ -461,6 +625,106 @@ function App() {
                 </button>
                 <button type="submit" className="submit-btn">
                   Add Trade
+                </button>
+              </div>
+            </form>          </div>
+        </div>
+      )}
+
+      {/* New Field Configuration Modal */}
+      {isNewFieldModalOpen && (
+        <div className="modal-overlay" onClick={closeNewFieldModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add New Field</h3>
+              <button onClick={closeNewFieldModal} className="modal-close-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <form className="new-field-form" onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.target as HTMLFormElement)
+              const fieldData = {
+                label: formData.get('label') as string,
+                type: formData.get('type') as TradeField['type'],
+                required: formData.get('required') === 'on',
+                placeholder: formData.get('placeholder') as string || '',
+                enabled: true,
+                ...(formData.get('type') === 'select' ? {
+                  options: (formData.get('options') as string).split(',').map(opt => opt.trim()).filter(Boolean)
+                } : {})
+              }
+              addNewField(fieldData)
+            }}>
+              <div className="new-field-grid">
+                <div className="form-group">
+                  <label htmlFor="new-field-label">Field Label *</label>
+                  <input
+                    type="text"
+                    id="new-field-label"
+                    name="label"
+                    placeholder="e.g. Stop Loss"
+                    required
+                  />
+                </div>
+                  <div className="form-group">
+                  <label htmlFor="new-field-type">Field Type *</label>
+                  <select 
+                    id="new-field-type" 
+                    name="type" 
+                    required
+                    onChange={(e) => {
+                      const optionsGroup = document.getElementById('select-options-group')
+                      if (optionsGroup) {
+                        optionsGroup.style.display = e.target.value === 'select' ? 'block' : 'none'
+                      }
+                    }}
+                  >
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="date">Date</option>
+                    <option value="select">Select</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="new-field-placeholder">Placeholder</label>
+                  <input
+                    type="text"
+                    id="new-field-placeholder"
+                    name="placeholder"
+                    placeholder="Enter placeholder text"
+                  />
+                </div>
+                
+                <div className="form-group checkbox-group">
+                  <label>
+                    <input type="checkbox" name="required" />
+                    Required field
+                  </label>
+                </div>
+              </div>
+              
+              <div className="form-group conditional-options" id="select-options-group" style={{display: 'none'}}>
+                <label htmlFor="new-field-options">Select Options (comma separated)</label>
+                <input
+                  type="text"
+                  id="new-field-options"
+                  name="options"
+                  placeholder="Option 1, Option 2, Option 3"
+                />
+                <small>Separate multiple options with commas</small>
+              </div>
+              
+              <div className="form-actions">
+                <button type="button" onClick={closeNewFieldModal} className="cancel-btn">
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  Add Field
                 </button>
               </div>
             </form>
