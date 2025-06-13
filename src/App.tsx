@@ -224,13 +224,15 @@ function App() {
     
     // Calcola P&L basico (simulazione)
     newTrade.pnl = (Math.random() - 0.5) * 1000 // Simulazione per demo
-    
-    // Salva il trade
+      // Salva il trade
     saveTradeToStorage(newTrade)
     setIsAddTradeModalOpen(false)
     
-    // Mostra notifica di successo
-    alert(`Trade aggiunto e salvato nel file CSV! Symbol: ${newTrade.symbol}, P&L: ${newTrade.pnl.toFixed(2)}`)
+    // Mostra notifica di successo con il percorso del file
+    alert(`Trade aggiunto e salvato! 
+Symbol: ${newTrade.symbol}
+P&L: ${newTrade.pnl.toFixed(2)}
+Salvato in: ${getFullFilePath()}`)
   }
   // Funzioni per gestire la configurazione dei campi
   const updateField = (fieldId: string, updates: Partial<TradeField>) => {
@@ -442,11 +444,10 @@ function App() {
       try {
         const fullPath = getFullFilePath()
         await window.electronAPI.saveFile(csvContent, fullPath)
-        alert(`File salvato con successo in: ${fullPath}`)
-        return
+        return { success: true, message: `File salvato in: ${fullPath}` }
       } catch (error) {
         console.error('Error saving file directly:', error)
-        alert('Errore nel salvare il file direttamente. Verrà utilizzato il download normale.')
+        // Continua con il download normale
       }
     }
 
@@ -460,6 +461,15 @@ function App() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+      return { success: true, message: `File scaricato: ${fileName}` }
+  }
+
+  // Export manuale con messaggio di conferma
+  const exportToCSVManual = async () => {
+    const result = await exportToCSV()
+    if (result.success) {
+      alert(`Export completato!\n${result.message}\n\nDati: ${allTrades.length} trade esportati`)
+    }
   }
   const importFromCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -487,19 +497,22 @@ function App() {
           }
           newTrades.push(trade)
         }
-      }
-        if (newTrades.length > 0) {
+      }      if (newTrades.length > 0) {
         // Aggiorna lo stato con i nuovi trade
         setUserTrades(newTrades)
         // Salva anche nel localStorage
         localStorage.setItem('tradelog_trades', JSON.stringify(newTrades))
-        alert(`Successfully imported ${newTrades.length} trades from CSV file!`)
+        
+        // Salva automaticamente nel file configurato (senza cambiare le impostazioni)
+        setTimeout(() => exportToCSV(), 100)
+        
+        alert(`Successfully imported ${newTrades.length} trades from CSV file! Data saved to: ${getFullFilePath()}`)
       }
     }
     reader.readAsText(file)
-    // Reset del valore dell'input per permettere di importare lo stesso file nuovamente
-    event.target.value = ''
+    // Reset del valore dell'input per permettere di importare lo stesso file nuovamente    event.target.value = ''
   }
+
   const saveTradeToStorage = (trade: Trade) => {
     // Aggiorna lo stato locale
     setUserTrades(prevTrades => {
@@ -509,8 +522,8 @@ function App() {
       return updatedTrades
     })
     
-    // Esporta automaticamente ogni volta che si aggiunge un trade
-    setTimeout(() => exportToCSV(), 100) // Piccolo delay per permettere l'aggiornamento dello stato
+    // Salva automaticamente nel file configurato
+    setTimeout(() => exportToCSV(), 100)
   }// Componente per renderizzare i grafici
   const renderChart = (config: ChartConfig) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -853,7 +866,7 @@ function App() {
                     </svg>
                     Import CSV
                   </label>
-                  <button onClick={exportToCSV} className="export-btn">
+                  <button onClick={exportToCSVManual} className="export-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                       <polyline points="14,2 14,8 20,8"></polyline>
@@ -869,9 +882,15 @@ function App() {
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     Add Trade
-                  </button>
-                </div>
+                  </button>                </div>
               </div>
+              
+              <div className="trades-info">
+                <small>
+                  💡 Import/Export always uses the file configured in Settings: <strong>{getFullFilePath()}</strong>
+                </small>
+              </div>
+              
               <div className="trades-table-full">
                 <div className="table-header-full">
                   <div onClick={() => handleSort('date')} className="sortable">
@@ -1026,13 +1045,13 @@ function App() {
             {/* File Path Configuration */}
             <div className="settings-section">              <h3>Data File Configuration</h3>
               <p>Set the file path where your trade data will be saved and exported.</p>
-              
-              <div className="help-box">
+                <div className="help-box">
                 <h4>💡 How it works:</h4>
                 <ul>
+                  <li><strong>Auto-save:</strong> Every new trade is automatically saved to the configured file</li>
+                  <li><strong>Import/Export:</strong> Always uses the file path configured below</li>
                   <li><strong>Web Browser:</strong> Files are downloaded to your default download folder</li>
                   <li><strong>Electron App:</strong> Files are saved directly to the specified destination folder</li>
-                  <li><strong>Auto-save:</strong> Each new trade is automatically saved to the configured location</li>
                 </ul>
               </div>
               
