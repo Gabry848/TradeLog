@@ -26,6 +26,16 @@ interface FilterState {
   maxPnL: string
 }
 
+interface NewTradeData {
+  symbol: string | null
+  type: string | null
+  qty: string | null
+  price: string | null
+  date: string | null
+  strategy: string | null
+  fees: string | null
+}
+
 const allTrades: Trade[] = [
   { id: 1, date: '2024-04-12', symbol: 'AMZN', type: 'Buy', qty: 10, price: 3200.0, pnl: 500.0, fees: 12.50, strategy: 'Momentum' },
   { id: 2, date: '2024-04-11', symbol: 'TSLA', type: 'Sell', qty: 5, price: 190.00, pnl: -1550.0, fees: 8.75, strategy: 'Scalping' },
@@ -43,6 +53,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('Dashboard')
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({
     symbol: '',
     type: '',
@@ -96,7 +107,6 @@ function App() {
   const handleFilterChange = (field: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }))
   }
-
   const clearFilters = () => {
     setFilters({
       symbol: '',
@@ -107,6 +117,21 @@ function App() {
       minPnL: '',
       maxPnL: ''
     })
+  }
+
+  const openAddTradeModal = () => {
+    setIsAddTradeModalOpen(true)
+  }
+
+  const closeAddTradeModal = () => {
+    setIsAddTradeModalOpen(false)
+  }
+  const handleAddTrade = (tradeData: NewTradeData) => {
+    // Demo: qui in futuro aggiungeremo il trade ai dati
+    console.log('Adding trade:', tradeData)
+    setIsAddTradeModalOpen(false)
+    // Mostra notifica di successo (demo)
+    alert('Trade aggiunto con successo! (Demo)')
   }
 
   const formatDate = (dateString: string) => {
@@ -298,12 +323,17 @@ function App() {
                   </button>
                 </div>
               </div>
-            </div>
-
-            {/* Trades Table */}
+            </div>            {/* Trades Table */}
             <div className="trades-section">
               <div className="trades-header">
                 <h3>All Trades ({filteredAndSortedTrades.length})</h3>
+                <button onClick={openAddTradeModal} className="add-trade-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Trade
+                </button>
               </div>
               <div className="trades-table-full">
                 <div className="table-header-full">
@@ -362,9 +392,81 @@ function App() {
           <div className="coming-soon">
             <h3>Settings</h3>
             <p>Coming soon...</p>
-          </div>
-        )}
+          </div>        )}
       </main>
+
+      {/* Add Trade Modal */}
+      {isAddTradeModalOpen && (
+        <div className="modal-overlay" onClick={closeAddTradeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add New Trade</h3>
+              <button onClick={closeAddTradeModal} className="modal-close-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>            <form className="trade-form" onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.target as HTMLFormElement)
+              const tradeData: NewTradeData = {
+                symbol: formData.get('symbol') as string | null,
+                type: formData.get('type') as string | null,
+                qty: formData.get('qty') as string | null,
+                price: formData.get('price') as string | null,
+                date: formData.get('date') as string | null,
+                strategy: formData.get('strategy') as string | null,
+                fees: formData.get('fees') as string | null
+              }
+              handleAddTrade(tradeData)
+            }}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="symbol">Symbol *</label>
+                  <input type="text" id="symbol" name="symbol" placeholder="e.g. AAPL" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="type">Type *</label>
+                  <select id="type" name="type" required>
+                    <option value="">Select type</option>
+                    <option value="Buy">Buy</option>
+                    <option value="Sell">Sell</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="qty">Quantity *</label>
+                  <input type="number" id="qty" name="qty" min="1" placeholder="100" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="price">Price *</label>
+                  <input type="number" id="price" name="price" step="0.01" min="0" placeholder="150.00" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="date">Date *</label>
+                  <input type="date" id="date" name="date" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="strategy">Strategy</label>
+                  <input type="text" id="strategy" name="strategy" placeholder="e.g. Momentum" />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="fees">Fees</label>
+                  <input type="number" id="fees" name="fees" step="0.01" min="0" placeholder="9.95" />
+                </div>
+              </div>
+              <div className="form-actions">
+                <button type="button" onClick={closeAddTradeModal} className="cancel-btn">
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  Add Trade
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
