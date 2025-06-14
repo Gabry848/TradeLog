@@ -6,12 +6,27 @@
   margin-bottom: 2rem;
 }
 
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .metric-card {
   background-color: #1e2025;
   border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid #3a3d45;
   position: relative;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.metric-card:hover {
+  border-color: #4f5355;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .metric-card h3 {
@@ -19,20 +34,25 @@
   font-size: 0.9rem;
   color: #9ca3af;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .metric-value {
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0;
+  line-height: 1.1;
 }
 
 .metric-value.positive {
   color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
 .metric-value.negative {
   color: #ef4444;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
 .chart-container {
@@ -41,11 +61,18 @@
   right: 1rem;
   width: 120px;
   height: 60px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.metric-card:hover .chart-container {
+  opacity: 1;
 }
 
 .equity-chart {
   width: 100%;
   height: 100%;
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.1));
 }
 
 /* Equity Section */
@@ -55,20 +82,157 @@
   padding: 1.5rem;
   margin-bottom: 2rem;
   border: 1px solid #3a3d45;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.equity-section:hover {
+  border-color: #4f5355;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.equity-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.equity-section:hover::before {
+  opacity: 1;
 }
 
 .equity-section h3 {
   margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: #9ca3af;
-  font-weight: 500;
+  font-size: 1.1rem;
+  color: #f3f4f6;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.equity-section h3::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(180deg, #10b981, #3b82f6);
+  border-radius: 2px;
 }
 
 .equity-chart-large {
-  height: 200px;
+  height: 250px;
+  position: relative;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .equity-chart-large svg {
   width: 100%;
   height: 100%;
+  filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.2));
+}
+
+/* Miglioramenti per il grafico SVG */
+.equity-chart-large svg polyline {
+  transition: stroke-width 0.2s ease;
+}
+
+.equity-chart-large:hover svg polyline {
+  stroke-width: 3;
+}
+
+/* Aggiungiamo un gradiente per il riempimento dell'area sotto la curva */
+.equity-chart-large svg defs linearGradient stop:first-child {
+  stop-color: rgba(16, 185, 129, 0.3);
+}
+
+.equity-chart-large svg defs linearGradient stop:last-child {
+  stop-color: rgba(16, 185, 129, 0);
+}
+
+/* Animazioni per i grafici */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.metrics-grid {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.equity-section {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.metric-card {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.metric-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+/* Animazione per le linee SVG */
+.equity-chart-large svg polyline,
+.equity-chart svg polyline {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 2s ease-out forwards;
+}
+
+.equity-chart-large:hover svg polyline {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Effetti hover migliorati */
+.metric-card:hover .metric-value {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.equity-section:hover .equity-chart-large svg {
+  transform: scale(1.02);
+  transition: transform 0.3s ease;
+}
+
+/* Responsive miglioramenti */
+@media (max-width: 480px) {
+  .metric-card {
+    padding: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+  
+  .chart-container {
+    width: 100px;
+    height: 50px;
+  }
 }
