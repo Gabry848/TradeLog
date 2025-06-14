@@ -9,6 +9,8 @@ export interface Trade {
   exitPrice?: number;
   stopLoss?: number;
   takeProfit?: number;
+  targetProfit?: number; // Obiettivo di profitto per il trade
+  maxLoss?: number; // Perdita massima accettabile per il trade
   exitReason?: "Stop Loss" | "Take Profit" | "Manual" | "Time" | "Partial";
   pnl: number;
   fees: number;
@@ -24,7 +26,7 @@ export interface Trade {
   [key: string]: string | number | boolean | undefined; // Per supportare campi dinamici
 }
 
-export type SortField = "entryDate" | "exitDate" | "symbol" | "type" | "qty" | "entryPrice" | "exitPrice" | "pnl" | "fees" | "status" | "hitProfitTarget" | "actualEntryPrice" | "actualExitPrice" | "date" | "price";
+export type SortField = "entryDate" | "exitDate" | "symbol" | "type" | "qty" | "entryPrice" | "exitPrice" | "targetProfit" | "maxLoss" | "pnl" | "fees" | "status" | "hitProfitTarget" | "actualEntryPrice" | "actualExitPrice" | "date" | "price";
 export type SortDirection = "asc" | "desc";
 
 export interface FilterState {
@@ -47,6 +49,8 @@ export interface NewTradeData {
   exitDate: string | null;
   stopLoss: string | null;
   takeProfit: string | null;
+  targetProfit: string | null; // Obiettivo di profitto per il trade
+  maxLoss: string | null; // Perdita massima accettabile per il trade
   exitReason: string | null;
   strategy: string | null;
   fees: string | null;

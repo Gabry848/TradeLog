@@ -21,7 +21,6 @@ import {
   NewTradeData,
   EditingCell,
   ErrorCell,
-  DefaultValues,
   CustomChartScript
 } from "./types";
 
@@ -42,25 +41,12 @@ function App() {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
-  
-  // Local storage hooks - solo per configurazioni, non per i trade
+    // Local storage hooks - solo per configurazioni, non per i trade
   const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [tradeFields, setTradeFields] = useLocalStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
   const [customScripts, setCustomScripts] = useLocalStorage<CustomChartScript[]>('tradelog_custom_scripts', getDefaultChartScripts());
   const [filePath, setFilePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
   const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
-  const [defaultValues, setDefaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
-    qty: '100',
-    entryPrice: '150.00',
-    exitPrice: '155.00',
-    stopLoss: '145.00',
-    takeProfit: '160.00',
-    fees: '2.50',
-    status: 'Closed',
-    strategy: 'Swing Trading',    // Campi legacy
-    price: '155.00',
-    pnl: '0.00'
-  });
 
   // Filters and editing state
   const [filters, setFilters] = useState<FilterState>({
@@ -143,14 +129,17 @@ function App() {
       exitDate: tradeData.exitDate || undefined,
       symbol: tradeData.symbol || "",
       type: (tradeData.type as "Buy" | "Sell") || "Buy",
-      qty: parseFloat(tradeData.qty || defaultValues.qty || "1"),
-      entryPrice: parseFloat(tradeData.entryPrice || defaultValues.entryPrice || "100"),
+      qty: parseFloat(tradeData.qty || "1"),
+      entryPrice: parseFloat(tradeData.entryPrice || "0"),
       exitPrice: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : undefined,
       stopLoss: tradeData.stopLoss ? parseFloat(tradeData.stopLoss) : undefined,
-      takeProfit: tradeData.takeProfit ? parseFloat(tradeData.takeProfit) : undefined,      exitReason: tradeData.exitReason as "Stop Loss" | "Take Profit" | "Manual" | "Time" | "Partial" | undefined,
-      pnl: parseFloat(tradeData.pnl || defaultValues.pnl || "0"), // P&L impostato dall'utente
-      fees: parseFloat(tradeData.fees || defaultValues.fees || "1"),
-      strategy: tradeData.strategy || defaultValues.strategy || "Manual",
+      takeProfit: tradeData.takeProfit ? parseFloat(tradeData.takeProfit) : undefined,
+      targetProfit: tradeData.targetProfit ? parseFloat(tradeData.targetProfit) : undefined,
+      maxLoss: tradeData.maxLoss ? parseFloat(tradeData.maxLoss) : undefined,
+      exitReason: tradeData.exitReason as "Stop Loss" | "Take Profit" | "Manual" | "Time" | "Partial" | undefined,
+      pnl: parseFloat(tradeData.pnl || "0"), // P&L impostato dall'utente
+      fees: parseFloat(tradeData.fees || "0"),
+      strategy: tradeData.strategy || "",
       status: (tradeData.status as "Open" | "Closed") || "Open",
       // Nuovi campi per tracking profit target
       hitProfitTarget: tradeData.hitProfitTarget === "true" || false,
@@ -158,7 +147,7 @@ function App() {
       actualExitPrice: tradeData.actualExitPrice ? parseFloat(tradeData.actualExitPrice) : undefined,
       // Campi legacy per compatibilità
       date: tradeData.exitDate || tradeData.entryDate || new Date().toISOString().split("T")[0],
-      price: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : parseFloat(tradeData.entryPrice || defaultValues.entryPrice || "100"),
+      price: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : parseFloat(tradeData.entryPrice || "0"),
     };
 
     // Se il trade è chiuso, determina automaticamente il motivo di uscita se non specificato
@@ -183,7 +172,7 @@ function App() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const newTrades = importFromCSV(text, tradeFields, defaultValues);
+      const newTrades = importFromCSV(text, tradeFields);
       
       if (newTrades.length > 0) {
         // Aggiunge i nuovi trade a quelli esistenti
@@ -204,7 +193,7 @@ function App() {
     reader.readAsText(file);
     event.target.value = '';
   };  const handleExport = async () => {
-    await exportToCSV(allTrades, tradeFields, filePath, destinationPath, defaultValues);
+    await exportToCSV(allTrades, tradeFields, filePath, destinationPath);
     // Salvataggio silenzioso - nessun messaggio di conferma
   };
 
@@ -283,9 +272,7 @@ function App() {
       case "Trades":
         return (
           <TradesPage
-            trades={filteredAndSortedTrades}
-            tradeFields={tradeFields}
-            defaultValues={defaultValues}
+            trades={filteredAndSortedTrades}            tradeFields={tradeFields}
             filters={filters}
             sortField={sortField}
             sortDirection={sortDirection}
@@ -313,16 +300,13 @@ function App() {
             customScripts={customScripts}
             onUpdateScripts={setCustomScripts}
           />
-        );
-        case "Settings":        return (
+        );        case "Settings":        return (
           <SettingsPage
             filePath={filePath}
             destinationPath={destinationPath}
-            defaultValues={defaultValues}
             tradeFields={tradeFields}
             onFilePathChange={setFilePath}
             onDestinationPathChange={setDestinationPath}
-            onDefaultValuesChange={setDefaultValues}
             onTradeFieldsUpdate={setTradeFields}
             onSelectDestinationFolder={selectDestinationFolder}
           />
@@ -336,7 +320,7 @@ function App() {
   useEffect(() => {
     const loadTrades = async () => {
       try {
-        const loadedTrades = await loadTradesFromFile(filePath, destinationPath, tradeFields, defaultValues);        if (loadedTrades.length > 0) {
+        const loadedTrades = await loadTradesFromFile(filePath, destinationPath, tradeFields);        if (loadedTrades.length > 0) {
           setUserTrades(loadedTrades);
         } else {
           // Se non ci sono trade nel file, l'applicazione inizia vuota
@@ -348,14 +332,14 @@ function App() {
     };
 
     loadTrades();
-  }, [filePath, destinationPath, tradeFields, defaultValues]);
+  }, [filePath, destinationPath, tradeFields]);
 
   // Salva automaticamente quando cambiano i trade (solo se non sono demo trade)
   useEffect(() => {
     if (userTrades.length > 0) {
-      saveTradesDirectly(userTrades, tradeFields, filePath, destinationPath, defaultValues);
+      saveTradesDirectly(userTrades, tradeFields, filePath, destinationPath);
     }
-  }, [userTrades, filePath, destinationPath, tradeFields, defaultValues]);
+  }, [userTrades, filePath, destinationPath, tradeFields]);
 
   return (
     <div className="app">
@@ -363,12 +347,9 @@ function App() {
       
       <main className="main">
         {renderMainContent()}
-      </main>
-
-      <AddTradeModal
+      </main>      <AddTradeModal
         isOpen={isAddTradeModalOpen}
         tradeFields={tradeFields}
-        defaultValues={defaultValues}
         onClose={() => setIsAddTradeModalOpen(false)}
         onSubmit={handleAddTrade}
       />

@@ -1,15 +1,14 @@
 import React from 'react';
-import { TradeField, DefaultValues } from '../../types';
+import { TradeField } from '../../types';
+import { defaultTradeFields } from '../../data/defaults';
 import FieldsManager from './FieldsManager';
 
 interface SettingsPageProps {
   filePath: string;
   destinationPath: string;
-  defaultValues: DefaultValues;
   tradeFields: TradeField[];
   onFilePathChange: (path: string) => void;
   onDestinationPathChange: (path: string) => void;
-  onDefaultValuesChange: (values: DefaultValues) => void;
   onTradeFieldsUpdate: (fields: TradeField[]) => void;
   onSelectDestinationFolder: () => void;
 }
@@ -17,26 +16,18 @@ interface SettingsPageProps {
 const SettingsPage: React.FC<SettingsPageProps> = ({
   filePath,
   destinationPath,
-  defaultValues,
   tradeFields,
   onFilePathChange,
   onDestinationPathChange,
-  onDefaultValuesChange,
   onTradeFieldsUpdate,
   onSelectDestinationFolder,
-}) => {
-  const getFullFilePath = () => {
+}) => {const getFullFilePath = () => {
     if (!destinationPath) return filePath;
     const separator = destinationPath.includes("/") ? "/" : "\\";
     const cleanDestination = destinationPath.endsWith("/") || destinationPath.endsWith("\\")
       ? destinationPath.slice(0, -1)
       : destinationPath;
     return `${cleanDestination}${separator}${filePath}`;
-  };
-
-  const handleDefaultValueChange = (fieldId: string, value: string) => {
-    const newDefaults = { ...defaultValues, [fieldId]: value };
-    onDefaultValuesChange(newDefaults);
   };
 
   return (
@@ -116,82 +107,31 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <strong>💾 Storage:</strong> Tutte le operazioni salvate nel file specificato (punto di riferimento unico)
           </div>
         </div>
-      </div>
-
-      {/* Default Values Section */}
-      <div className="settings-section">
-        <h3>⚙️ Valori Predefiniti per Nuove Operazioni</h3>
-        <p>Imposta i valori che verranno utilizzati di default quando aggiungi una nuova operazione.</p>
-        
-        <div className="info-note" style={{ backgroundColor: '#e3f2fd', padding: '12px', borderRadius: '6px', marginBottom: '16px', border: '1px solid #90caf9' }}>
-          <strong>📋 Importante:</strong> Il P&L deve ora essere inserito manualmente per ogni operazione. Non viene più calcolato automaticamente dal sistema.
-        </div>
-
-        <div className="defaults-grid">
-          <div className="form-group">
-            <label htmlFor="default-pnl">💰 P&L Predefinito</label>
-            <input
-              type="number"
-              id="default-pnl"
-              value={defaultValues.pnl || '0'}
-              onChange={(e) => handleDefaultValueChange('pnl', e.target.value)}
-              step="0.01"
-              placeholder="0.00"
-              className="config-input"
-            />
-            <small>Valore di profitto/perdita di default (da impostare manualmente)</small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="default-qty">📊 Quantità Predefinita</label>
-            <input
-              type="number"
-              id="default-qty"
-              value={defaultValues.qty || '1'}
-              onChange={(e) => handleDefaultValueChange('qty', e.target.value)}
-              min="1"
-              placeholder="1"
-              className="config-input"
-            />
-            <small>Numero di azioni/contratti di default</small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="default-price">💵 Prezzo Predefinito</label>
-            <input
-              type="number"
-              id="default-price"
-              value={defaultValues.price || '100'}
-              onChange={(e) => handleDefaultValueChange('price', e.target.value)}
-              step="0.01"
-              min="0"
-              placeholder="100.00"
-              className="config-input"
-            />
-            <small>Prezzo per azione di default</small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="default-fees">🏷️ Commissioni Predefinite</label>
-            <input
-              type="number"
-              id="default-fees"
-              value={defaultValues.fees || '1'}
-              onChange={(e) => handleDefaultValueChange('fees', e.target.value)}
-              step="0.01"
-              min="0"
-              placeholder="1.00"
-              className="config-input"
-            />
-            <small>Commissioni del broker di default</small>
-          </div>
-        </div>
-      </div>
-
-      {/* Field Configuration Section */}
+      </div>      {/* Field Configuration Section */}
       <div className="settings-section">
         <h3>📝 Campi delle Operazioni Configurati</h3>
         <p>Questi sono i campi attualmente configurati per registrare le operazioni:</p>
+        
+        <div className="fields-actions" style={{ marginBottom: '16px' }}>
+          <button 
+            onClick={() => onTradeFieldsUpdate(defaultTradeFields)}
+            className="reset-fields-btn"
+            style={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            🔄 Ripristina Campi di Default
+          </button>
+          <small style={{ marginLeft: '12px', color: '#666' }}>
+            Ripristina tutti i campi inclusi Target Profit, Max Loss e Profit/Loss
+          </small>
+        </div>
         
         <div className="fields-preview">
           {tradeFields.filter(field => field.enabled).map((field) => (

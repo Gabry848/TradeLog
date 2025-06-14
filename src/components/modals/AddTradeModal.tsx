@@ -5,7 +5,6 @@ import '../../styles/modal.css';
 interface AddTradeModalProps {
   isOpen: boolean;
   tradeFields: TradeField[];
-  defaultValues: { [key: string]: string };
   onClose: () => void;
   onSubmit: (tradeData: NewTradeData) => void;
 }
@@ -13,7 +12,6 @@ interface AddTradeModalProps {
 const AddTradeModal: React.FC<AddTradeModalProps> = ({
   isOpen,
   tradeFields,
-  defaultValues,
   onClose,
   onSubmit,
 }) => {
@@ -29,9 +27,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
       entryPrice: formData.get("entryPrice") as string | null,
       exitPrice: formData.get("exitPrice") as string | null,
       entryDate: formData.get("entryDate") as string | null,
-      exitDate: formData.get("exitDate") as string | null,
-      stopLoss: formData.get("stopLoss") as string | null,
+      exitDate: formData.get("exitDate") as string | null,      stopLoss: formData.get("stopLoss") as string | null,
       takeProfit: formData.get("takeProfit") as string | null,
+      targetProfit: formData.get("targetProfit") as string | null,
+      maxLoss: formData.get("maxLoss") as string | null,
       exitReason: formData.get("exitReason") as string | null,
       strategy: formData.get("strategy") as string | null,
       fees: formData.get("fees") as string | null,
@@ -97,13 +96,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                         </option>
                       ))}
                     </select>
-                  ) : (
-                    <input
+                  ) : (                    <input
                       type={field.type}
                       id={field.id}
                       name={field.id}
                       placeholder={field.placeholder}
-                      defaultValue={defaultValues[field.id] || ''}
                       required={field.required}
                       {...(field.type === "number"
                         ? {

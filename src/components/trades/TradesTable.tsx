@@ -1,12 +1,10 @@
 import React from 'react';
 import { Trade, TradeField, SortField, SortDirection, EditingCell, ErrorCell } from '../../types';
 import { formatDate, formatCurrency, formatPnL } from '../../utils/formatters';
-import { getDefaultValue } from '../../utils/tradeUtils';
 
 interface TradesTableProps {
   trades: Trade[];
   tradeFields: TradeField[];
-  defaultValues: { [key: string]: string };
   sortField: SortField;
   sortDirection: SortDirection;
   editingCell: EditingCell | null;
@@ -21,7 +19,6 @@ interface TradesTableProps {
 const TradesTable: React.FC<TradesTableProps> = ({
   trades,
   tradeFields,
-  defaultValues,
   sortField,
   sortDirection,
   editingCell,
@@ -56,7 +53,7 @@ const TradesTable: React.FC<TradesTableProps> = ({
     return tradeFields
       .filter(field => field.enabled)
       .map(field => {
-        const value = trade[field.id] ?? getDefaultValue(field.type, field.id, defaultValues);
+        const value = trade[field.id] ?? (field.type === 'number' ? 0 : '');
         const isEditing = editingCell?.tradeId === trade.id && editingCell?.fieldId === field.id;
         const hasError = errorCell?.tradeId === trade.id && errorCell?.fieldId === field.id;
         

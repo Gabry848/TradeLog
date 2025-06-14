@@ -1,35 +1,17 @@
-import { Trade, TradeField, DefaultValues } from '../types';
+import { Trade, TradeField } from '../types';
 
-export const getDefaultValue = (fieldType: string, fieldId: string, defaultValues: DefaultValues): string => {
-  // Usa i valori di default configurabili se disponibili
-  if (defaultValues[fieldId]) {
-    return defaultValues[fieldId];
-  }
-  
-  switch (fieldType) {
-    case 'number':
-      return '0';
-    case 'date':
-      return new Date().toISOString().split('T')[0];
-    case 'text':
-      if (fieldId === 'type') return 'Buy';
-      if (fieldId === 'strategy') return 'Unknown';
-      return '';
-    default:
-      return '';
-  }
-};
-
-export const initializeTradeFields = (trade: Trade, tradeFields: TradeField[], defaultValues: DefaultValues): Trade => {
+export const initializeTradeFields = (trade: Trade, tradeFields: TradeField[]): Trade => {
   const initializedTrade = { ...trade };
   
-  // Assicurati che tutti i campi configurati abbiano un valore
+  // Assicurati che tutti i campi configurati abbiano un valore di base
   tradeFields.forEach(field => {
     if (initializedTrade[field.id] === undefined || initializedTrade[field.id] === null || initializedTrade[field.id] === '') {
       if (field.type === 'number') {
-        initializedTrade[field.id] = parseFloat(getDefaultValue(field.type, field.id, defaultValues));
+        initializedTrade[field.id] = 0;
+      } else if (field.type === 'date') {
+        initializedTrade[field.id] = new Date().toISOString().split('T')[0];
       } else {
-        initializedTrade[field.id] = getDefaultValue(field.type, field.id, defaultValues);
+        initializedTrade[field.id] = '';
       }
     }
   });

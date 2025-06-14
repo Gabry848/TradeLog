@@ -1,12 +1,11 @@
 import { Trade, TradeField } from '../types';
-import { getDefaultValue, initializeTradeFields } from './tradeUtils';
+import { initializeTradeFields } from './tradeUtils';
 
 export const exportToCSV = async (
   trades: Trade[],
   tradeFields: TradeField[],
   filePath: string,
-  destinationPath: string,
-  defaultValues: { [key: string]: string }
+  destinationPath: string
 ): Promise<{ success: boolean; message: string }> => {
   // Assicurati che il nome del file sia valido
   const fileName = filePath.toLowerCase().endsWith(".csv") ? filePath : filePath + ".csv";
@@ -20,7 +19,7 @@ export const exportToCSV = async (
       tradeFields
         .filter(field => field.enabled)
         .map(field => {
-          const value = trade[field.id] ?? getDefaultValue(field.type, field.id, defaultValues);
+          const value = trade[field.id] ?? (field.type === 'number' ? '0' : '');
           return String(value);
         })
         .join(",")
@@ -54,8 +53,7 @@ export const exportToCSV = async (
 
 export const importFromCSV = (
   text: string,
-  tradeFields: TradeField[],
-  defaultValues: { [key: string]: string }
+  tradeFields: TradeField[]
 ): Trade[] => {
   const lines = text.split("\n").filter(line => line.trim());
   if (lines.length < 2) return [];
@@ -65,23 +63,21 @@ export const importFromCSV = (
 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(",").map(v => v.trim());
-    if (values.length < 3) continue;
-
-    // Crea un trade base con i campi obbligatori
+    if (values.length < 3) continue;    // Crea un trade base con i campi obbligatori
     const trade: Trade = {
       id: Date.now() + i,
-      entryDate: getDefaultValue('date', 'entryDate', defaultValues),
-      symbol: getDefaultValue('text', 'symbol', defaultValues),
-      type: getDefaultValue('text', 'type', defaultValues) as 'Buy' | 'Sell',
-      qty: parseFloat(getDefaultValue('number', 'qty', defaultValues)),
-      entryPrice: parseFloat(getDefaultValue('number', 'entryPrice', defaultValues)),
+      entryDate: new Date().toISOString().split('T')[0],
+      symbol: '',
+      type: 'Buy' as 'Buy' | 'Sell',
+      qty: 1,
+      entryPrice: 0,
       pnl: 0,
-      fees: parseFloat(getDefaultValue('number', 'fees', defaultValues)),
-      strategy: getDefaultValue('text', 'strategy', defaultValues),
-      status: getDefaultValue('text', 'status', defaultValues) as 'Open' | 'Closed',
+      fees: 0,
+      strategy: '',
+      status: 'Closed' as 'Open' | 'Closed',
       // Campi legacy
-      date: getDefaultValue('date', 'date', defaultValues),
-      price: parseFloat(getDefaultValue('number', 'price', defaultValues)),
+      date: new Date().toISOString().split('T')[0],
+      price: 0,
     };
 
     // Mappa i valori CSV ai campi del trade basandosi sui header
@@ -104,7 +100,7 @@ export const importFromCSV = (
     trade.date = trade.exitDate || trade.entryDate;
     trade.price = trade.exitPrice || trade.entryPrice;
 
-    newTrades.push(initializeTradeFields(trade, tradeFields, defaultValues));
+    newTrades.push(initializeTradeFields(trade, tradeFields));
   }
 
   return newTrades;
@@ -125,8 +121,7 @@ export const getFullFilePath = (filePath: string, destinationPath: string): stri
 export const loadTradesFromFile = async (
   filePath: string,
   destinationPath: string,
-  tradeFields: TradeField[],
-  defaultValues: { [key: string]: string }
+  tradeFields: TradeField[]
 ): Promise<Trade[]> => {
   const fullPath = getFullFilePath(filePath, destinationPath);
   
@@ -134,7 +129,7 @@ export const loadTradesFromFile = async (
   if (window.electronAPI && window.electronAPI.readFile && destinationPath) {
     try {
       const fileContent = await window.electronAPI.readFile(fullPath);
-      return importFromCSV(fileContent, tradeFields, defaultValues);
+      return importFromCSV(fileContent, tradeFields);
     } catch (error) {
       console.log('File non trovato, lo creo vuoto:', error);
       
@@ -160,11 +155,10 @@ export const saveTradesDirectly = async (
   trades: Trade[],
   tradeFields: TradeField[],
   filePath: string,
-  destinationPath: string,
-  defaultValues: { [key: string]: string }
+  destinationPath: string
 ): Promise<void> => {
   try {
-    const result = await exportToCSV(trades, tradeFields, filePath, destinationPath, defaultValues);
+    const result = await exportToCSV(trades, tradeFields, filePath, destinationPath);
     if (!result.success) {
       console.error('Errore nel salvataggio:', result.message);
     }

@@ -7,7 +7,6 @@ import TradesTable from './TradesTable';
 interface TradesPageProps {
   trades: Trade[];
   tradeFields: TradeField[];
-  defaultValues: { [key: string]: string };
   filters: FilterState;
   sortField: SortField;
   sortDirection: SortDirection;
@@ -28,7 +27,6 @@ interface TradesPageProps {
 const TradesPage: React.FC<TradesPageProps> = ({
   trades,
   tradeFields,
-  defaultValues,
   filters,
   sortField,
   sortDirection,
@@ -63,11 +61,9 @@ const TradesPage: React.FC<TradesPageProps> = ({
             onExport={onExport}
             onAddTrade={onAddTrade}
           />
-        </div>
-          <TradesTable
+        </div>          <TradesTable
           trades={trades}
           tradeFields={tradeFields}
-          defaultValues={defaultValues}
           sortField={sortField}
           sortDirection={sortDirection}
           editingCell={editingCell}
