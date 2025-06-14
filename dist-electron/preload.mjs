@@ -22,5 +22,6 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 electron.contextBridge.exposeInMainWorld("electronAPI", {
   selectFolder: () => electron.ipcRenderer.invoke("select-folder"),
-  saveFile: (data, filePath) => electron.ipcRenderer.invoke("save-file", data, filePath)
+  saveFile: (data, filePath) => electron.ipcRenderer.invoke("save-file", data, filePath),
+  readFile: (filePath) => electron.ipcRenderer.invoke("read-file", filePath)
 });

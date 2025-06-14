@@ -174,12 +174,9 @@ const CustomChartsPageSimple: React.FC<CustomChartsPageProps> = ({
                 (() => {
                   const chartData = executeSelectedScript();
                   if (chartData) {
-                    return (
-                      <CustomChartViewer
+                    return (                      <CustomChartViewer
                         chartData={chartData}
                         chartType={selectedScript.chartType}
-                        width={800}
-                        height={500}
                       />
                     );
                   } else {
@@ -217,12 +214,9 @@ const CustomChartsPageSimple: React.FC<CustomChartsPageProps> = ({
                     if (chartData) {
                       return (
                         <div style={{ width: '100%', marginTop: '20px' }}>
-                          <h4 style={{ textAlign: 'center', marginBottom: '20px' }}>{defaultScript.name}</h4>
-                          <CustomChartViewer
+                          <h4 style={{ textAlign: 'center', marginBottom: '20px' }}>{defaultScript.name}</h4>                          <CustomChartViewer
                             chartData={chartData}
                             chartType={defaultScript.chartType}
-                            width={700}
-                            height={400}
                           />
                         </div>
                       );

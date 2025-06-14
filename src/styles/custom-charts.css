@@ -3,9 +3,12 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  max-height: 100vh;
   padding: 15px;
   background-color: #2a2d35;
   color: white;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .custom-charts-header {
@@ -30,6 +33,7 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  max-height: 100%;
 }
 
 /* Scripts Sidebar */
@@ -41,6 +45,8 @@
   overflow-y: auto;
   border: 1px solid #3a3d45;
   flex-shrink: 0;
+  max-height: 100%;
+  box-sizing: border-box;
 }
 
 .scripts-sidebar h3 {
@@ -164,6 +170,8 @@
   flex-direction: column;
   min-width: 0;
   position: relative;
+  max-height: 100%;
+  box-sizing: border-box;
 }
 
 .chart-display .custom-chart-container {
@@ -182,8 +190,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 350px;
+  min-height: 0;
   flex: 1;
+  overflow: hidden;
+  max-height: 100%;
 }
 
 .chart-header {
@@ -270,21 +280,24 @@
   flex: 1;
   padding: 8px;
   box-sizing: border-box;
-  min-height: 250px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chart-title {
-  margin: 0 0 20px 40px;
+  margin: 0 0 15px 0;
   color: #ffffff;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 600;
   text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 .chart-wrapper {
   width: 100%;
   height: 100%;
-  min-height: 250px;
+  min-height: 0;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
@@ -292,6 +305,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  flex: 1;
+  overflow: hidden;
 }
 
 .custom-chart {
@@ -299,11 +314,12 @@
   border-radius: 8px;
   width: 100% !important;
   height: 100% !important;
-  min-height: 250px;
-  max-height: 500px;
+  min-height: 200px;
+  max-height: 100%;
   display: block;
   margin: 0 auto;
   box-sizing: border-box;
+  text-align: center;
 }
 
 /* Assicura che i contenitori dei grafici si adattino correttamente */
@@ -329,10 +345,11 @@
   flex: 1;
   width: 100%;
   height: 100%;
-  min-height: 250px;
+  min-height: 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 /* Miglioramenti specifici per la visualizzazione dei grafici */
@@ -341,10 +358,13 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
-  min-height: 320px;
+  min-height: 0;
   padding: 15px;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 
 .chart-display .chart-wrapper {
@@ -353,95 +373,126 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 280px;
+  min-height: 0;
   flex: 1;
+  overflow: hidden;
+  text-align: center;
+  position: relative;
+  padding: 20px;
 }
 
 .chart-display .custom-chart {
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 280px;
+  width: 80% !important;
+  height: 80% !important;
+  max-width: 800px;
+  max-height: 600px;
+  min-width: 300px;
   min-height: 250px;
-  max-height: 75vh;
   border: 1px solid #3a3d45;
   border-radius: 8px;
   background-color: #2a2d35;
-  padding: 8px;
+  padding: 15px;
   box-sizing: border-box;
+  display: block;
+  margin: 0 auto;
+  position: relative;
 }
 
-/* Stili specifici per i grafici Canvas */
-.chart-display canvas {
-  max-width: 100% !important;
-  max-height: 100% !important;
-  border-radius: 6px;
+/* Centratura perfetta per i grafici SVG */
+.chart-display .custom-chart svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
+  width: auto !important;
+  height: auto !important;
 }
 
-/* Stili specifici per i grafici SVG */
+/* Assicura che il contenitore del grafico sia posizionato relativamente */
+.chart-display .custom-chart {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Stili specifici per i grafici Canvas e SVG */
+.chart-display canvas,
 .chart-display svg {
+  display: block;
+  margin: 0 auto;
+  width: 100% !important;
+  height: 100% !important;
   max-width: 100% !important;
   max-height: 100% !important;
   border-radius: 6px;
+  object-fit: contain;
 }
 
-/* Contenitore per i grafici di default quando non c'è selezione */
-.chart-display .no-selection {
-  width: 100%;
-  height: 100%;
+.custom-chart svg,
+.custom-chart canvas {
+  display: block;
+  margin: 0 auto;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  position: relative;
+  object-fit: contain;
+}
+
+/* Centratura per i contenitori dei grafici */
+.chart-display .custom-chart-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 30px;
-}
-
-.chart-display .no-selection .custom-chart-container {
-  background-color: #2a2d35;
-  border-radius: 12px;
-  border: 1px solid #3a3d45;
-  padding: 15px;
-  margin-top: 15px;
+  text-align: center;
 }
 
 /* Chart Script Editor */
 .chart-script-editor {
-  padding: 20px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 15px;
+  background-color: #2a2d35;
   color: white;
   height: 100vh;
+  max-height: 100vh;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .script-editor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #3a3d45;
 }
 
 .script-editor-header h3 {
   margin: 0;
   color: #ffffff;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
 }
 
 .script-editor-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .script-errors {
-  background: rgba(239, 68, 68, 0.1);
+  background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
+  padding: 12px;
+  margin-bottom: 15px;
 }
 
 .script-errors h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   color: #ef4444;
 }
 
@@ -458,53 +509,55 @@
 .script-editor-content {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 20px;
 }
 
 .script-basic-info {
-  background: rgba(255, 255, 255, 0.05);
+  background-color: #1e2025;
   border-radius: 12px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border: 1px solid #3a3d45;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+  color: #ffffff;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 10px;
+  border: 1px solid #3a3d45;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background-color: #2a2d35;
   color: white;
-  font-size: 14px;
+  font-size: 13px;
+  transition: border-color 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+  background-color: #353942;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -514,17 +567,17 @@
 
 /* Parameters */
 .script-parameters {
-  background: rgba(255, 255, 255, 0.05);
+  background-color: #1e2025;
   border-radius: 12px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border: 1px solid #3a3d45;
 }
 
 .parameters-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .parameters-header h4 {
@@ -533,41 +586,41 @@
 }
 
 .parameter-editor {
-  background: rgba(255, 255, 255, 0.08);
+  background-color: #2a2d35;
   border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #3a3d45;
 }
 
 .parameter-fields {
   display: grid;
-  grid-template-columns: 1fr 120px 120px auto auto;
-  gap: 10px;
+  grid-template-columns: 1fr 110px 110px auto auto;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .parameter-description {
   grid-column: 1 / -1;
-  margin-top: 10px !important;
+  margin-top: 8px !important;
 }
 
 /* Code Editor */
 .script-code {
-  background: rgba(255, 255, 255, 0.05);
+  background-color: #1e2025;
   border-radius: 12px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border: 1px solid #3a3d45;
 }
 
 .script-code h4 {
-  margin: 0 0 15px 0;
+  margin: 0 0 12px 0;
   color: #ffffff;
 }
 
 .code-editor {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .code-textarea {
@@ -683,6 +736,74 @@
   background: rgba(239, 68, 68, 1);
 }
 
+/* Sezioni dell'editor degli script */
+.script-basic-info h4,
+.script-parameters h4,
+.script-code h4 {
+  margin: 0 0 12px 0;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #3a3d45;
+  padding-bottom: 8px;
+}
+
+/* Stili per i pulsanti nell'editor */
+.script-editor-actions button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid #3a3d45;
+  background-color: #1e2025;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.script-editor-actions button:hover {
+  background-color: #353942;
+  border-color: #4a4d55;
+}
+
+.script-editor-actions button.btn-primary {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+}
+
+.script-editor-actions button.btn-primary:hover {
+  background-color: #2563eb;
+  border-color: #1d4ed8;
+}
+
+.script-editor-actions button.btn-secondary {
+  background-color: #6b7280;
+  border-color: #4b5563;
+}
+
+.script-editor-actions button.btn-secondary:hover {
+  background-color: #4b5563;
+  border-color: #374151;
+}
+
+/* Miglioramenti per i parametri */
+.parameter-editor {
+  transition: border-color 0.2s ease;
+}
+
+.parameter-editor:hover {
+  border-color: #4a4d55;
+}
+
+/* Stili per il code editor */
+.code-editor textarea {
+  min-height: 200px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .custom-charts-content {
@@ -701,9 +822,13 @@
 }
 
 @media (max-width: 1024px) {
+  .custom-charts-page {
+    padding: 12px;
+  }
+  
   .chart-display .custom-chart {
-    min-height: 220px;
-    max-height: 65vh;
+    min-height: 150px;
+    max-height: 100%;
   }
 }
 
@@ -712,28 +837,44 @@
     padding: 8px;
   }
   
+  .custom-charts-content {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
   .chart-display .custom-chart {
-    min-height: 180px;
-    max-height: 55vh;
+    min-height: 120px;
+    max-height: 100%;
   }
   
   .chart-display .custom-chart-container {
-    padding: 10px;
+    padding: 8px;
   }
   
   .scripts-sidebar {
     width: 100%;
-    max-height: 250px;
+    max-height: 200px;
+    order: 2;
   }
   
-  .script-editor-header {
+  .chart-display {
+    order: 1;
+    flex: 2;
+  }
+    .script-editor-header {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     align-items: stretch;
+    padding-bottom: 8px;
   }
   
   .script-editor-actions {
     justify-content: center;
+  }
+  
+  .parameter-fields {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
   
   .chart-display .custom-chart {

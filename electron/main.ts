@@ -85,3 +85,13 @@ ipcMain.handle('save-file', async (_event, data: string, filePath: string) => {
     throw error
   }
 })
+
+ipcMain.handle('read-file', async (_event, filePath: string) => {
+  try {
+    const data = await fs.readFile(filePath, 'utf8')
+    return data
+  } catch (error) {
+    console.error('Error reading file:', error)
+    throw error
+  }
+})

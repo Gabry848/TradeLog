@@ -44,14 +44,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* File Configuration Section */}
       <div className="settings-section">
         <h3>📁 Configurazione File di Salvataggio</h3>
-        <p>Imposta dove salvare le tue operazioni di trading.</p>
-        
-        <div className="help-box">
+        <p>Imposta dove salvare le tue operazioni di trading.</p>        <div className="help-box">
           <h4>💡 Come funziona:</h4>
           <ul>
-            <li><strong>Auto-save:</strong> Ogni operazione viene salvata automaticamente</li>
-            <li><strong>Import CSV:</strong> Importa operazioni da file esterni</li>
-            <li><strong>Export CSV:</strong> Salva tutto in formato CSV</li>
+            <li><strong>File Unico:</strong> Tutte le operazioni vengono salvate SOLO nel file specificato</li>
+            <li><strong>Inizio Pulito:</strong> L'applicazione inizia sempre vuota, senza operazioni demo</li>
+            <li><strong>Auto-save:</strong> Ogni operazione viene salvata automaticamente nel file</li>
+            <li><strong>Import CSV:</strong> Importa operazioni da file esterni (sostituisce i dati attuali)</li>
+            <li><strong>Export CSV:</strong> Crea una copia del file in un'altra posizione</li>
             <li><strong>Browser Web:</strong> Download nella cartella predefinita</li>
             <li><strong>App Electron:</strong> Salvataggio diretto nella cartella specificata</li>
           </ul>
@@ -112,9 +112,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           <div className="info-row">
             <strong>🔗 Percorso completo:</strong> <code>{getFullFilePath()}</code>
-          </div>
-          <div className="info-row">
-            <strong>💾 Storage:</strong> Dati salvati nel browser + export CSV automatico
+          </div>          <div className="info-row">
+            <strong>💾 Storage:</strong> Tutte le operazioni salvate nel file specificato (punto di riferimento unico)
           </div>
         </div>
       </div>
@@ -124,6 +123,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         <h3>⚙️ Valori Predefiniti per Nuove Operazioni</h3>
         <p>Imposta i valori che verranno utilizzati di default quando aggiungi una nuova operazione.</p>
         
+        <div className="info-note" style={{ backgroundColor: '#e3f2fd', padding: '12px', borderRadius: '6px', marginBottom: '16px', border: '1px solid #90caf9' }}>
+          <strong>📋 Importante:</strong> Il P&L deve ora essere inserito manualmente per ogni operazione. Non viene più calcolato automaticamente dal sistema.
+        </div>
+
         <div className="defaults-grid">
           <div className="form-group">
             <label htmlFor="default-pnl">💰 P&L Predefinito</label>
@@ -136,7 +139,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               placeholder="0.00"
               className="config-input"
             />
-            <small>Valore di profitto/perdita di default</small>
+            <small>Valore di profitto/perdita di default (da impostare manualmente)</small>
           </div>
 
           <div className="form-group">

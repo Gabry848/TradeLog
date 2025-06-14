@@ -1,5 +1,6 @@
 import React from 'react';
 import { TradeField, NewTradeData } from '../../types';
+import '../../styles/modal.css';
 
 interface AddTradeModalProps {
   isOpen: boolean;
@@ -72,9 +73,14 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
             {tradeFields
               .filter((field) => field.enabled)
               .map((field) => (
-                <div key={field.id} className="form-group">
+                <div key={field.id} className={`form-group ${field.id === 'pnl' ? 'pnl-field' : ''}`}>
                   <label htmlFor={field.id}>
                     {field.label} {field.required && "*"}
+                    {field.id === 'pnl' && (
+                      <span style={{ fontSize: '12px', color: '#666', fontWeight: 'normal' }}>
+                        {' '}(Inserire manualmente)
+                      </span>
+                    )}
                   </label>
                   {field.type === "select" ? (
                     <select

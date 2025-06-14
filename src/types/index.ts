@@ -1,13 +1,3 @@
-// Dichiarazione per l'API Electron
-declare global {
-  interface Window {
-    electronAPI?: {
-      selectFolder: () => Promise<{ canceled: boolean; filePaths: string[] }>;
-      saveFile: (data: string, filePath: string) => Promise<void>;
-    };
-  }
-}
-
 export interface Trade {
   id: number;
   entryDate: string;

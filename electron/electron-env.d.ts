@@ -24,4 +24,9 @@ declare namespace NodeJS {
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
   ipcRenderer: import('electron').IpcRenderer
+  electronAPI: {
+    selectFolder: () => Promise<{ canceled: boolean; filePaths: string[] }>
+    saveFile: (data: string, filePath: string) => Promise<void>
+    readFile: (filePath: string) => Promise<string>
+  }
 }

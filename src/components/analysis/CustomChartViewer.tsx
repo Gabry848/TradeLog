@@ -11,8 +11,8 @@ interface CustomChartViewerProps {
 const CustomChartViewer: React.FC<CustomChartViewerProps> = ({ 
   chartData, 
   chartType, 
-  width = 800, 
-  height = 400 
+  width = 600, 
+  height = 300 
 }) => {
   const svgProps = useMemo(() => {
     const padding = 60;

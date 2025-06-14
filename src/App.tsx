@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import "./App_NEW.css";
 import "./styles/custom-charts.css";
 
@@ -29,24 +29,27 @@ import {
 import { useLocalStorage } from "./hooks/useLocalStorage";
 
 // Utils
-import { exportToCSV, importFromCSV } from "./utils/fileUtils";
-import { validateCellValue, calculatePnL, determineExitReason, migrateLegacyTrades } from "./utils/tradeUtils";
+import { exportToCSV, importFromCSV, loadTradesFromFile, saveTradesDirectly } from "./utils/fileUtils";
+import { validateCellValue, determineExitReason, migrateLegacyTrades } from "./utils/tradeUtils";
 import { getDefaultChartScripts } from "./utils/chartScriptUtils";
 
 // Default configurations
-import { defaultTradeFields, demoTrades } from "./data/defaults";
+import { defaultTradeFields } from "./data/defaults";
 
 function App() {
   // State management
   const [activeTab, setActiveTab] = useState<ActiveTab>("Dashboard");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);  // Local storage hooks
-  const [userTrades, setUserTrades] = useLocalStorage<Trade[]>('tradelog_trades', []);
+  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
+  
+  // Local storage hooks - solo per configurazioni, non per i trade
+  const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [tradeFields, setTradeFields] = useLocalStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
   const [customScripts, setCustomScripts] = useLocalStorage<CustomChartScript[]>('tradelog_custom_scripts', getDefaultChartScripts());
   const [filePath, setFilePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
-  const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");  const [defaultValues, setDefaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
+  const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
+  const [defaultValues, setDefaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
     qty: '100',
     entryPrice: '150.00',
     exitPrice: '155.00',
@@ -54,10 +57,9 @@ function App() {
     takeProfit: '160.00',
     fees: '2.50',
     status: 'Closed',
-    strategy: 'Swing Trading',
-    // Campi legacy
+    strategy: 'Swing Trading',    // Campi legacy
     price: '155.00',
-    pnl: '500.00'
+    pnl: '0.00'
   });
 
   // Filters and editing state
@@ -71,11 +73,9 @@ function App() {
     maxPnL: "",
   });
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
-  const [errorCell, setErrorCell] = useState<ErrorCell | null>(null);
-  // Combine demo trades with user trades and apply migration
+  const [errorCell, setErrorCell] = useState<ErrorCell | null>(null);  // Utilizza solo i trade dell'utente, senza trade demo
   const allTrades = useMemo(() => {
-    const trades = userTrades.length > 0 ? userTrades : demoTrades;
-    return migrateLegacyTrades(trades);
+    return migrateLegacyTrades(userTrades);
   }, [userTrades]);
   // Filtered and sorted trades
   const filteredAndSortedTrades = useMemo(() => {
@@ -89,18 +89,23 @@ function App() {
       if (filters.maxPnL && trade.pnl > parseFloat(filters.maxPnL)) return false;
       return true;
     });    return filtered.sort((a: Trade, b: Trade) => {
-      let aValue: string | number = a[sortField] ?? '';
-      let bValue: string | number = b[sortField] ?? '';
+      let aValue: string | number | boolean = a[sortField] ?? '';
+      let bValue: string | number | boolean = b[sortField] ?? '';
 
       if (sortField === "date" || sortField === "entryDate" || sortField === "exitDate") {
         aValue = new Date(aValue as string).getTime();
         bValue = new Date(bValue as string).getTime();
       }
 
-      if (typeof aValue === "string") {
+      // Gestisci i valori booleani
+      if (typeof aValue === "boolean" || typeof bValue === "boolean") {
+        aValue = aValue ? 1 : 0;
+        bValue = bValue ? 1 : 0;
+      }      if (typeof aValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = (bValue as string).toLowerCase();
       }
+      
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
@@ -142,9 +147,8 @@ function App() {
       entryPrice: parseFloat(tradeData.entryPrice || defaultValues.entryPrice || "100"),
       exitPrice: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : undefined,
       stopLoss: tradeData.stopLoss ? parseFloat(tradeData.stopLoss) : undefined,
-      takeProfit: tradeData.takeProfit ? parseFloat(tradeData.takeProfit) : undefined,
-      exitReason: tradeData.exitReason as "Stop Loss" | "Take Profit" | "Manual" | "Time" | "Partial" | undefined,
-      pnl: 0, // Sarà calcolato automaticamente se il trade è chiuso
+      takeProfit: tradeData.takeProfit ? parseFloat(tradeData.takeProfit) : undefined,      exitReason: tradeData.exitReason as "Stop Loss" | "Take Profit" | "Manual" | "Time" | "Partial" | undefined,
+      pnl: parseFloat(tradeData.pnl || defaultValues.pnl || "0"), // P&L impostato dall'utente
       fees: parseFloat(tradeData.fees || defaultValues.fees || "1"),
       strategy: tradeData.strategy || defaultValues.strategy || "Manual",
       status: (tradeData.status as "Open" | "Closed") || "Open",
@@ -157,33 +161,19 @@ function App() {
       price: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : parseFloat(tradeData.entryPrice || defaultValues.entryPrice || "100"),
     };
 
-    // Se il trade è chiuso e ha un exit price, calcola automaticamente il P&L
-    if (newTrade.status === "Closed" && newTrade.exitPrice) {
-      const calculatedPnL = calculatePnL(
+    // Se il trade è chiuso, determina automaticamente il motivo di uscita se non specificato
+    if (newTrade.status === "Closed" && !newTrade.exitReason && newTrade.exitPrice) {
+      newTrade.exitReason = determineExitReason(
         newTrade.type,
-        newTrade.entryPrice,
         newTrade.exitPrice,
-        newTrade.qty,
-        newTrade.fees
+        newTrade.stopLoss,
+        newTrade.takeProfit
       );
-      newTrade.pnl = calculatedPnL;
-      
-      // Determina il motivo di uscita se non specificato
-      if (!newTrade.exitReason) {        newTrade.exitReason = determineExitReason(
-          newTrade.type,
-          newTrade.exitPrice,
-          newTrade.stopLoss,
-          newTrade.takeProfit
-        );
-      }
-    }
-
-    // Salva il trade
+    }// Salva il trade direttamente nel file configurato
     setUserTrades((prevTrades: Trade[]) => [...prevTrades, newTrade]);
     setIsAddTradeModalOpen(false);
 
-    // Auto export
-    setTimeout(() => handleExport(), 100);
+    // Il salvataggio automatico avviene tramite useEffect
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,12 +194,10 @@ function App() {
           const tradesWithNewIds = newTrades.map((trade, index) => ({
             ...trade,
             id: maxExistingId + index + 1,
-          }));
-
-          return [...currentRealTrades, ...tradesWithNewIds];
+          }));          return [...currentRealTrades, ...tradesWithNewIds];
         });
 
-        setTimeout(() => handleExport(), 100);
+        // Il salvataggio automatico avviene tramite useEffect
         alert(`Successfully imported ${newTrades.length} trades!`);
       }
     };
@@ -248,25 +236,21 @@ function App() {
           }
           
           return { ...trade, [fieldId]: processedValue } as Trade;
-        }
-        return trade;
+        }        return trade;
       });
       
-      // Non salvare automaticamente, lascia che sia l'utente a decidere quando salvare
+      // Il salvataggio automatico avviene tramite useEffect
       return updatedTrades;
     });
-  };
-  const handleCellBlur = () => {
+  };  const handleCellBlur = () => {
     setEditingCell(null);
-    // Salva il file quando si esce dal campo (per le select e quando si clicca fuori)
-    setTimeout(() => handleExport(), 100);
+    // Il salvataggio automatico avviene tramite useEffect
   };
 
   const handleCellKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setEditingCell(null);
-      // Salva il file quando si preme Invio
-      setTimeout(() => handleExport(), 100);
+      // Il salvataggio automatico avviene tramite useEffect
     } else if (e.key === 'Escape') {
       setEditingCell(null);
     }
@@ -348,6 +332,30 @@ function App() {
         return <Dashboard trades={allTrades} />;
     }
   };
+  // Carica i trade dal file al primo avvio
+  useEffect(() => {
+    const loadTrades = async () => {
+      try {
+        const loadedTrades = await loadTradesFromFile(filePath, destinationPath, tradeFields, defaultValues);        if (loadedTrades.length > 0) {
+          setUserTrades(loadedTrades);
+        } else {
+          // Se non ci sono trade nel file, l'applicazione inizia vuota
+          console.log('Nessun trade trovato nel file, iniziando con lista vuota');
+        }
+      } catch (error) {
+        console.error('Errore nel caricamento dei trade:', error);
+      }
+    };
+
+    loadTrades();
+  }, [filePath, destinationPath, tradeFields, defaultValues]);
+
+  // Salva automaticamente quando cambiano i trade (solo se non sono demo trade)
+  useEffect(() => {
+    if (userTrades.length > 0) {
+      saveTradesDirectly(userTrades, tradeFields, filePath, destinationPath, defaultValues);
+    }
+  }, [userTrades, filePath, destinationPath, tradeFields, defaultValues]);
 
   return (
     <div className="app">

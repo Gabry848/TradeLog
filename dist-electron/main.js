@@ -54,6 +54,15 @@ ipcMain.handle("save-file", async (_event, data, filePath) => {
     throw error;
   }
 });
+ipcMain.handle("read-file", async (_event, filePath) => {
+  try {
+    const data = await fs.readFile(filePath, "utf8");
+    return data;
+  } catch (error) {
+    console.error("Error reading file:", error);
+    throw error;
+  }
+});
 export {
   MAIN_DIST,
   RENDERER_DIST,

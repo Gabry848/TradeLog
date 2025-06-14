@@ -29,7 +29,7 @@ import { exportToCSV, importFromCSV } from "./utils/fileUtils";
 import { validateCellValue } from "./utils/tradeUtils";
 
 // Default configurations
-import { defaultTradeFields, demoTrades } from "./data/defaults";
+import { defaultTradeFields } from "./data/defaults";
 
 function App() {
   // State management
@@ -66,7 +66,7 @@ function App() {
 
   // Combine demo trades with user trades
   const allTrades = useMemo(() => {
-    return userTrades.length > 0 ? userTrades : demoTrades;
+    return userTrades;
   }, [userTrades]);
   // Filtered and sorted trades
   const filteredAndSortedTrades = useMemo(() => {
