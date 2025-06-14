@@ -4,6 +4,10 @@
   flex-direction: column;
   gap: 2rem;
   max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .settings-section {
@@ -262,6 +266,10 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .settings-page {
+    padding: 1rem;
+  }
+  
   .file-config-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
