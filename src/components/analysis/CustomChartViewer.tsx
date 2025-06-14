@@ -31,14 +31,12 @@ const CustomChartViewer: React.FC<CustomChartViewerProps> = ({
   const renderBarChart = () => {
     const { padding, chartWidth, chartHeight } = svgProps;
     const maxValue = Math.max(...chartData.datasets[0].data);
-    const minValue = Math.min(0, ...chartData.datasets[0].data);
-    const range = maxValue - minValue || 1;
-    
-    const barWidth = chartWidth / chartData.labels.length * 0.8;
+    const minValue = Math.min(0, ...chartData.datasets[0].data);    const range = maxValue - minValue || 1;
+      const barWidth = chartWidth / chartData.labels.length * 0.8;
     const barSpacing = chartWidth / chartData.labels.length * 0.2;
 
     return (
-      <svg width={width} height={height} className="custom-chart">
+      <svg viewBox={`0 0 ${width} ${height}`} className="custom-chart">
         {/* Asse Y */}
         <line
           x1={padding}
@@ -151,13 +149,11 @@ const CustomChartViewer: React.FC<CustomChartViewerProps> = ({
 
   const renderLineChart = () => {
     const { padding, chartWidth, chartHeight } = svgProps;
-    const allData = chartData.datasets.flatMap(dataset => dataset.data);
-    const maxValue = Math.max(...allData);
-    const minValue = Math.min(...allData);
-    const range = maxValue - minValue || 1;
+    const allData = chartData.datasets.flatMap(dataset => dataset.data);    const maxValue = Math.max(...allData);
+    const minValue = Math.min(...allData);    const range = maxValue - minValue || 1;
 
     return (
-      <svg width={width} height={height} className="custom-chart">
+      <svg viewBox={`0 0 ${width} ${height}`} className="custom-chart">
         {/* Asse Y */}
         <line
           x1={padding}
@@ -265,13 +261,10 @@ const CustomChartViewer: React.FC<CustomChartViewerProps> = ({
   const renderPieChart = () => {
     const centerX = width / 2;
     const centerY = height / 2;
-    const radius = Math.min(width, height) / 2 - 40;
-    
+    const radius = Math.min(width, height) / 2 - 40;    
     const total = chartData.datasets[0].data.reduce((sum, value) => sum + value, 0);
-    let currentAngle = 0;
-
-    return (
-      <svg width={width} height={height} className="custom-chart">
+    let currentAngle = 0;    return (
+      <svg viewBox={`0 0 ${width} ${height}`} className="custom-chart">
         {chartData.datasets[0].data.map((value, index) => {
           const angle = (value / total) * 360;
           const startAngle = currentAngle;
@@ -354,13 +347,14 @@ const CustomChartViewer: React.FC<CustomChartViewerProps> = ({
         return renderBarChart();
     }
   };
-
   return (
     <div className="custom-chart-container">
       {chartData.title && (
         <h3 className="chart-title">{chartData.title}</h3>
       )}
-      {renderChart()}
+      <div className="chart-wrapper">
+        {renderChart()}
+      </div>
     </div>
   );
 };

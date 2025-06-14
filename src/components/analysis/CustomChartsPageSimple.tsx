@@ -1,6 +1,6 @@
 // Test semplice per verificare che il componente CustomChartsPage funzioni
 import React, { useState } from 'react';
-import { CustomChartScript, Trade, ChartParameter } from '../../types';
+import { CustomChartScript, Trade } from '../../types';
 import { executeChartScript } from '../../utils/chartScriptUtils';
 import CustomChartViewer from './CustomChartViewer';
 import ChartScriptEditor from './ChartScriptEditor';
@@ -21,7 +21,7 @@ const CustomChartsPageSimple: React.FC<CustomChartsPageProps> = ({
   const [editingScript, setEditingScript] = useState<CustomChartScript | undefined>();
 
   // Parametri statici semplici per test
-  const [scriptParameters] = useState<{ [scriptId: string]: { [key: string]: string | number | boolean } }>({});
+  //const [scriptParameters] = useState<{ [scriptId: string]: { [key: string]: string | number | boolean } }>({});
 
   const handleSaveScript = (script: CustomChartScript) => {
     const existingIndex = customScripts.findIndex(s => s.id === script.id);
@@ -197,13 +197,50 @@ const CustomChartsPageSimple: React.FC<CustomChartsPageProps> = ({
                   <p>Abilita lo script per visualizzare il grafico.</p>
                 </div>
               )}
-            </div>
-          ) : (
+            </div>          ) : (
             <div className="no-selection">
-              <h3>Seleziona uno script</h3>
-              <p>Scegli uno script dalla barra laterale per visualizzare il grafico.</p>
+              <h3>Grafico di Default</h3>
+              <p>Visualizzazione del primo script disponibile.</p>
               
-              {customScripts.length === 0 && (
+              {customScripts.length > 0 ? (
+                (() => {
+                  const defaultScript = customScripts.find(s => s.enabled) || customScripts[0];
+                  if (defaultScript) {
+                    const chartData = (() => {
+                      const params: { [key: string]: string | number | boolean } = {};
+                      defaultScript.parameters.forEach(param => {
+                        params[param.id] = param.defaultValue;
+                      });
+                      return executeChartScript(defaultScript, trades, params);
+                    })();
+                    
+                    if (chartData) {
+                      return (
+                        <div style={{ width: '100%', marginTop: '20px' }}>
+                          <h4 style={{ textAlign: 'center', marginBottom: '20px' }}>{defaultScript.name}</h4>
+                          <CustomChartViewer
+                            chartData={chartData}
+                            chartType={defaultScript.chartType}
+                            width={700}
+                            height={400}
+                          />
+                        </div>
+                      );
+                    }
+                  }
+                  return (
+                    <div className="getting-started">
+                      <h4>Per iniziare:</h4>
+                      <ol>
+                        <li>Clicca su "Nuovo Script" per creare il tuo primo grafico personalizzato</li>
+                        <li>Scrivi il codice JavaScript per generare i dati del grafico</li>
+                        <li>Configura i parametri opzionali</li>
+                        <li>Salva e visualizza il risultato</li>
+                      </ol>
+                    </div>
+                  );
+                })()
+              ) : (
                 <div className="getting-started">
                   <h4>Per iniziare:</h4>
                   <ol>

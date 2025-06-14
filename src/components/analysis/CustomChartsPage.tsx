@@ -192,14 +192,13 @@ const CustomChartsPage: React.FC<CustomChartsPageProps> = ({
                   console.log('Rendering chart for script:', selectedScript.name);
                   const chartData = executeSelectedScript();
                   console.log('Chart data received:', chartData);
-                  
-                  if (chartData) {
+                    if (chartData) {
                     return (
                       <CustomChartViewer
                         chartData={chartData}
                         chartType={selectedScript.chartType}
-                        width={800}
-                        height={500}
+                        width={700}
+                        height={400}
                       />
                     );
                   } else {
