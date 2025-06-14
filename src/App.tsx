@@ -45,6 +45,7 @@ interface NewTradeData {
   date: string | null;
   strategy: string | null;
   fees: string | null;
+  pnl: string | null;
 }
 
 interface TradeField {
@@ -181,8 +182,14 @@ function App() {
   const [chartConfigs, setChartConfigs] =
     useState<ChartConfig[]>(defaultChartConfigs);  const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [filePath, setFilePath] = useState<string>("tradelog.csv");
-  const [destinationPath, setDestinationPath] = useState<string>("");  const [editingCell, setEditingCell] = useState<{tradeId: number, fieldId: string} | null>(null);  const [savedCell, setSavedCell] = useState<{tradeId: number, fieldId: string} | null>(null);
-  const [errorCell, setErrorCell] = useState<{tradeId: number, fieldId: string, message: string} | null>(null);
+  const [destinationPath, setDestinationPath] = useState<string>("");  const [editingCell, setEditingCell] = useState<{tradeId: number, fieldId: string} | null>(null);  const [savedCell, setSavedCell] = useState<{tradeId: number, fieldId: string} | null>(null);  const [errorCell, setErrorCell] = useState<{tradeId: number, fieldId: string, message: string} | null>(null);
+  const [isImportPreviewModalOpen, setIsImportPreviewModalOpen] = useState(false);  const [previewTrades, setPreviewTrades] = useState<Trade[]>([]);
+  const [defaultValues, setDefaultValues] = useState<{[key: string]: string}>({
+    pnl: '0',
+    qty: '1',
+    price: '100',
+    fees: '1'
+  });
   const [filters, setFilters] = useState<FilterState>({
     symbol: "",
     type: "",
@@ -197,14 +204,22 @@ function App() {
     const savedFilePath = localStorage.getItem("tradelog_filepath");
     if (savedFilePath) {
       setFilePath(savedFilePath);
-    }
-
-    // Carica il percorso di destinazione salvato
+    }    // Carica il percorso di destinazione salvato
     const savedDestinationPath = localStorage.getItem(
       "tradelog_destination_path"
     );
     if (savedDestinationPath) {
       setDestinationPath(savedDestinationPath);
+    }
+
+    // Carica i valori di default salvati
+    const savedDefaultValues = localStorage.getItem('tradelog_default_values');
+    if (savedDefaultValues) {
+      try {
+        setDefaultValues(JSON.parse(savedDefaultValues));
+      } catch (e) {
+        console.error('Error loading default values:', e);
+      }
     }
 
     // Carica i trade salvati
@@ -408,18 +423,17 @@ function App() {
   };
   const closeAddTradeModal = () => {
     setIsAddTradeModalOpen(false);
-  };
-  const handleAddTrade = (tradeData: NewTradeData) => {
-    // Crea un nuovo trade con i dati del form
+  };  const handleAddTrade = (tradeData: NewTradeData) => {
+    // Crea un nuovo trade con i dati del form o valori di default
     const newTrade: Trade = {
       id: Date.now(),
       date: tradeData.date || new Date().toISOString().split("T")[0],
       symbol: tradeData.symbol || "",
       type: (tradeData.type as "Buy" | "Sell") || "Buy",
-      qty: parseFloat(tradeData.qty || "0"),
-      price: parseFloat(tradeData.price || "0"),
-      pnl: 0, // Calcolato automaticamente in base a logica di trading
-      fees: parseFloat(tradeData.fees || "0"),
+      qty: parseFloat(tradeData.qty || defaultValues.qty || "1"),
+      price: parseFloat(tradeData.price || defaultValues.price || "100"),
+      pnl: parseFloat(tradeData.pnl || defaultValues.pnl || "0"),
+      fees: parseFloat(tradeData.fees || defaultValues.fees || "1"),
       strategy: tradeData.strategy || "Manual",
     };
 
@@ -625,9 +639,13 @@ function App() {
       destinationPath.endsWith("/") || destinationPath.endsWith("\\")
         ? destinationPath.slice(0, -1)
         : destinationPath;    return `${cleanDestination}${separator}${filePath}`;
-  };
-  // Funzione per ottenere il valore di default per un campo
+  };  // Funzione per ottenere il valore di default per un campo
   const getDefaultValue = (fieldType: string, fieldId: string): string => {
+    // Usa i valori di default configurabili se disponibili
+    if (defaultValues[fieldId]) {
+      return defaultValues[fieldId];
+    }
+    
     switch (fieldType) {
       case 'number':
         return '0'
@@ -899,9 +917,51 @@ function App() {
     if (result.success) {
       alert(
         `Export completato!\n${result.message}\n\nDati: ${allTrades.length} trade esportati`
-      );
-    }
+      );    }
   };
+
+  // Funzione per eseguire l'import effettivo
+  const performImport = (newTrades: Trade[]) => {
+    // Aggiunge i nuovi trade a quelli esistenti invece di sostituirli
+    setUserTrades((prevTrades) => {
+      // Se non ci sono trade reali (solo demo), inizia con una lista vuota
+      const currentRealTrades = prevTrades.length > 0 ? prevTrades : [];
+
+      // Trova l'ID più alto esistente per evitare conflitti
+      const maxExistingId = Math.max(
+        0,
+        ...currentRealTrades.map((t) => t.id)
+      );
+
+      // Aggiorna gli ID dei trade importati per evitare duplicati
+      const tradesWithNewIds = newTrades.map((trade, index) => ({
+        ...trade,
+        id: maxExistingId + index + 1,
+      }));
+
+      // Combina trade esistenti con quelli importati
+      const combinedTrades = [...currentRealTrades, ...tradesWithNewIds];
+
+      // Salva la lista completa nel localStorage
+      localStorage.setItem(
+        "tradelog_trades",
+        JSON.stringify(combinedTrades)
+      );
+
+      return combinedTrades;
+    });
+
+    // Salva automaticamente nel file configurato (senza cambiare le impostazioni)
+    setTimeout(() => exportToCSV(), 100);
+
+    const currentCount = userTrades.length > 0 ? userTrades.length : 0;
+    alert(
+      `Successfully imported ${newTrades.length} trades! 
+Total trades now: ${currentCount + newTrades.length}
+Data saved to: ${getFullFilePath()}`
+    );
+  };
+
   const importFromCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -934,45 +994,11 @@ function App() {
             }
           });          
           newTrades.push(initializeTradeFields(trade));
-        }
-      }
+        }      }
       if (newTrades.length > 0) {
-        // Aggiunge i nuovi trade a quelli esistenti invece di sostituirli
-        setUserTrades((prevTrades) => {
-          // Se non ci sono trade reali (solo demo), inizia con una lista vuota
-          const currentRealTrades = prevTrades.length > 0 ? prevTrades : [];
-
-          // Trova l'ID più alto esistente per evitare conflitti
-          const maxExistingId = Math.max(
-            0,
-            ...currentRealTrades.map((t) => t.id)
-          );
-
-          // Aggiorna gli ID dei trade importati per evitare duplicati
-          const tradesWithNewIds = newTrades.map((trade, index) => ({
-            ...trade,
-            id: maxExistingId + index + 1,
-          }));
-
-          // Combina trade esistenti con quelli importati
-          const combinedTrades = [...currentRealTrades, ...tradesWithNewIds];
-
-          // Salva la lista completa nel localStorage
-          localStorage.setItem(
-            "tradelog_trades",
-            JSON.stringify(combinedTrades)
-          );
-
-          return combinedTrades;
-        });
-
-        // Salva automaticamente nel file configurato (senza cambiare le impostazioni)
-        setTimeout(() => exportToCSV(), 100);
-
-        const currentCount = userTrades.length > 0 ? userTrades.length : 0;
-        alert(`Successfully imported ${newTrades.length} trades! 
-Total trades now: ${currentCount + newTrades.length}
-Data saved to: ${getFullFilePath()}`);
+        // Mostra sempre il modal di preview per permettere la modifica prima dell'import
+        setPreviewTrades(newTrades);
+        setIsImportPreviewModalOpen(true);
       }
     };
     reader.readAsText(file);
@@ -1705,6 +1731,83 @@ Data saved to: ${getFullFilePath()}`);
                     browser and exported to CSV
                   </div>
                 </div>
+              </div>            </div>
+
+            {/* Default Values Configuration */}
+            <div className="settings-section">
+              <h3>Default Values Configuration</h3>
+              <p>Set default values that will be used when importing data or creating new trades.</p>
+              
+              <div className="default-values-grid">
+                <div className="form-group">
+                  <label htmlFor="default-pnl">Default P&L</label>
+                  <input
+                    type="number"
+                    id="default-pnl"
+                    value={defaultValues.pnl || '0'}
+                    onChange={(e) => {
+                      const newDefaults = { ...defaultValues, pnl: e.target.value };
+                      setDefaultValues(newDefaults);
+                      localStorage.setItem('tradelog_default_values', JSON.stringify(newDefaults));
+                    }}
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                  <small>Default profit/loss value for new trades</small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="default-qty">Default Quantity</label>
+                  <input
+                    type="number"
+                    id="default-qty"
+                    value={defaultValues.qty || '1'}
+                    onChange={(e) => {
+                      const newDefaults = { ...defaultValues, qty: e.target.value };
+                      setDefaultValues(newDefaults);
+                      localStorage.setItem('tradelog_default_values', JSON.stringify(newDefaults));
+                    }}
+                    min="1"
+                    placeholder="1"
+                  />
+                  <small>Default quantity for new trades</small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="default-price">Default Price</label>
+                  <input
+                    type="number"
+                    id="default-price"
+                    value={defaultValues.price || '100'}
+                    onChange={(e) => {
+                      const newDefaults = { ...defaultValues, price: e.target.value };
+                      setDefaultValues(newDefaults);
+                      localStorage.setItem('tradelog_default_values', JSON.stringify(newDefaults));
+                    }}
+                    step="0.01"
+                    min="0"
+                    placeholder="100.00"
+                  />
+                  <small>Default price for new trades</small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="default-fees">Default Fees</label>
+                  <input
+                    type="number"
+                    id="default-fees"
+                    value={defaultValues.fees || '1'}
+                    onChange={(e) => {
+                      const newDefaults = { ...defaultValues, fees: e.target.value };
+                      setDefaultValues(newDefaults);
+                      localStorage.setItem('tradelog_default_values', JSON.stringify(newDefaults));
+                    }}
+                    step="0.01"
+                    min="0"
+                    placeholder="1.00"
+                  />
+                  <small>Default fees for new trades</small>
+                </div>
               </div>
             </div>
 
@@ -1912,8 +2015,7 @@ Data saved to: ${getFullFilePath()}`);
               className="trade-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                const formData = new FormData(e.target as HTMLFormElement);
-                const tradeData: NewTradeData = {
+                const formData = new FormData(e.target as HTMLFormElement);                const tradeData: NewTradeData = {
                   symbol: formData.get("symbol") as string | null,
                   type: formData.get("type") as string | null,
                   qty: formData.get("qty") as string | null,
@@ -1921,6 +2023,7 @@ Data saved to: ${getFullFilePath()}`);
                   date: formData.get("date") as string | null,
                   strategy: formData.get("strategy") as string | null,
                   fees: formData.get("fees") as string | null,
+                  pnl: formData.get("pnl") as string | null,
                 };
                 handleAddTrade(tradeData);
               }}
@@ -1948,12 +2051,12 @@ Data saved to: ${getFullFilePath()}`);
                             </option>
                           ))}
                         </select>
-                      ) : (
-                        <input
+                      ) : (                        <input
                           type={field.type}
                           id={field.id}
                           name={field.id}
                           placeholder={field.placeholder}
+                          defaultValue={defaultValues[field.id] || ''}
                           required={field.required}
                           {...(field.type === "number"
                             ? {
@@ -2198,6 +2301,96 @@ Data saved to: ${getFullFilePath()}`);
                 </button>
               </div>
             </form>
+          </div>        </div>
+      )}
+
+      {/* Import Preview Modal */}
+      {isImportPreviewModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal import-preview-modal">
+            <div className="modal-header">
+              <h2>Preview Import Data</h2>
+              <button
+                onClick={() => setIsImportPreviewModalOpen(false)}
+                className="close-button"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              <p>Review and modify the data before importing:</p>
+              
+              <div className="preview-table-container">
+                <div className="preview-table">
+                  <div className="preview-table-header">
+                    {tradeFields.filter(field => field.enabled).map(field => (
+                      <div key={field.id} className="preview-header-cell">
+                        {field.label}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {previewTrades.map((trade, index) => (
+                    <div key={index} className="preview-table-row">
+                      {tradeFields.filter(field => field.enabled).map(field => (
+                        <div key={field.id} className="preview-table-cell">
+                          {field.id === 'type' ? (
+                            <select
+                              value={String(trade[field.id] || getDefaultValue(field.type, field.id))}
+                              onChange={(e) => {
+                                const updatedTrades = [...previewTrades];
+                                updatedTrades[index] = { ...updatedTrades[index], [field.id]: e.target.value };
+                                setPreviewTrades(updatedTrades);
+                              }}
+                              className="preview-input"
+                            >
+                              <option value="Buy">Buy</option>
+                              <option value="Sell">Sell</option>
+                            </select>
+                          ) : (
+                            <input
+                              type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                              value={String(trade[field.id] || getDefaultValue(field.type, field.id))}
+                              onChange={(e) => {
+                                const updatedTrades = [...previewTrades];
+                                let value: string | number = e.target.value;
+                                if (field.type === 'number') {
+                                  value = parseFloat(e.target.value) || 0;
+                                }
+                                updatedTrades[index] = { ...updatedTrades[index], [field.id]: value };
+                                setPreviewTrades(updatedTrades);
+                              }}
+                              className="preview-input"
+                              step={field.type === 'number' ? '0.01' : undefined}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="preview-actions">
+                <button
+                  onClick={() => setIsImportPreviewModalOpen(false)}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    performImport(previewTrades);
+                    setIsImportPreviewModalOpen(false);
+                    setPreviewTrades([]);
+                  }}
+                  className="import-btn"
+                >
+                  Import {previewTrades.length} Trade{previewTrades.length !== 1 ? 's' : ''}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
