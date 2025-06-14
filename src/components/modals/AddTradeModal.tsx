@@ -17,7 +17,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
   onSubmit,
 }) => {
   if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -26,10 +25,22 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
       symbol: formData.get("symbol") as string | null,
       type: formData.get("type") as string | null,
       qty: formData.get("qty") as string | null,
-      price: formData.get("price") as string | null,
-      date: formData.get("date") as string | null,
+      entryPrice: formData.get("entryPrice") as string | null,
+      exitPrice: formData.get("exitPrice") as string | null,
+      entryDate: formData.get("entryDate") as string | null,
+      exitDate: formData.get("exitDate") as string | null,
+      stopLoss: formData.get("stopLoss") as string | null,
+      takeProfit: formData.get("takeProfit") as string | null,
+      exitReason: formData.get("exitReason") as string | null,
       strategy: formData.get("strategy") as string | null,
       fees: formData.get("fees") as string | null,
+      status: formData.get("status") as string | null,
+      hitProfitTarget: formData.get("hitProfitTarget") as string | null,
+      actualEntryPrice: formData.get("actualEntryPrice") as string | null,
+      actualExitPrice: formData.get("actualExitPrice") as string | null,
+      // Campi legacy per compatibilità
+      price: formData.get("price") as string | null,
+      date: formData.get("date") as string | null,
       pnl: formData.get("pnl") as string | null,
     };
     

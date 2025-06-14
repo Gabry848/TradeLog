@@ -57,36 +57,60 @@ export const importFromCSV = (
   tradeFields: TradeField[], 
   defaultValues: { [key: string]: string }
 ): Trade[] => {
-  const lines = text.split("\n");
+  const lines = text.split("\n").filter(line => line.trim());
+  if (lines.length < 2) return [];
+  
+  const headers = lines[0].split(",").map(h => h.trim());
   const newTrades: Trade[] = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",");
-    if (values.length >= 3 && values[0]) { // Minimo ID, symbol, type
-      // Crea un trade con tutti i campi configurati
-      const trade: Trade = {
-        id: parseInt(values[0]) || Date.now() + i,
-        date: values[1] || getDefaultValue('date', 'date', defaultValues),
-        symbol: values[2] || getDefaultValue('text', 'symbol', defaultValues),
-        type: (values[3] as 'Buy' | 'Sell') || getDefaultValue('text', 'type', defaultValues) as 'Buy' | 'Sell',
-        qty: parseFloat(values[4]) || parseFloat(getDefaultValue('number', 'qty', defaultValues)),
-        price: parseFloat(values[5]) || parseFloat(getDefaultValue('number', 'price', defaultValues)),
-        pnl: parseFloat(values[6]) || parseFloat(getDefaultValue('number', 'pnl', defaultValues)),
-        fees: parseFloat(values[7]) || parseFloat(getDefaultValue('number', 'fees', defaultValues)),
-        strategy: values[8] || getDefaultValue('text', 'strategy', defaultValues)
-      };
-      
-      // Aggiungi campi personalizzati se configurati
-      tradeFields.forEach((field, index) => {
-        if (!['id', 'date', 'symbol', 'type', 'qty', 'price', 'pnl', 'fees', 'strategy'].includes(field.id)) {
-          const csvIndex = 9 + index; // Dopo i campi base
-          const fieldValue = values[csvIndex] || getDefaultValue(field.type, field.id, defaultValues);
-          (trade as Record<string, string | number>)[field.id] = field.type === 'number' ? parseFloat(fieldValue) || 0 : fieldValue;
+    const values = lines[i].split(",").map(v => v.trim());
+    if (values.length < 3) continue;
+    
+    // Crea un trade base con i campi obbligatori
+    const trade: Trade = {
+      id: Date.now() + i,
+      entryDate: getDefaultValue('date', 'entryDate', defaultValues),
+      symbol: getDefaultValue('text', 'symbol', defaultValues),
+      type: getDefaultValue('text', 'type', defaultValues) as 'Buy' | 'Sell',
+      qty: parseFloat(getDefaultValue('number', 'qty', defaultValues)),
+      entryPrice: parseFloat(getDefaultValue('number', 'entryPrice', defaultValues)),
+      pnl: 0,
+      fees: parseFloat(getDefaultValue('number', 'fees', defaultValues)),
+      strategy: getDefaultValue('text', 'strategy', defaultValues),
+      status: getDefaultValue('text', 'status', defaultValues) as 'Open' | 'Closed',
+      // Campi legacy
+      date: getDefaultValue('date', 'date', defaultValues),
+      price: parseFloat(getDefaultValue('number', 'price', defaultValues)),
+    };
+    
+    // Mappa i valori CSV ai campi del trade basandosi sui header
+    headers.forEach((header, index) => {
+      if (index < values.length && values[index]) {
+        const field = tradeFields.find(f => f.label === header || f.id === header);
+        if (field) {
+          let value: string | number = values[index];
+          if (field.type === 'number') {
+            value = parseFloat(values[index]) || 0;
+          }
+          (trade as Record<string, string | number | undefined>)[field.id] = value;
         }
-      });
-      
-      newTrades.push(initializeTradeFields(trade, tradeFields, defaultValues));
+      }
+    });
+    
+    // Se il trade è chiuso e ha exitPrice, calcola il P&L automaticamente
+    if (trade.status === "Closed" && trade.exitPrice && trade.exitPrice > 0) {
+      const calculatedPnL = (trade.type === "Buy" 
+        ? (trade.exitPrice - trade.entryPrice) 
+        : (trade.entryPrice - trade.exitPrice)) * trade.qty - trade.fees;
+      trade.pnl = calculatedPnL;
     }
+    
+    // Assicurati che i campi legacy siano sincronizzati
+    trade.date = trade.exitDate || trade.entryDate;
+    trade.price = trade.exitPrice || trade.entryPrice;
+    
+    newTrades.push(initializeTradeFields(trade, tradeFields, defaultValues));
   }
   
   return newTrades;

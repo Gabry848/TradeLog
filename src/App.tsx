@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import "./App_NEW.css";
+import "./styles/custom-charts.css";
 
 // Components
 import Header from "./components/layout/Header";
@@ -7,6 +8,7 @@ import Dashboard from "./components/dashboard/Dashboard";
 import TradesPage from "./components/trades/TradesPage";
 import AddTradeModal from "./components/modals/AddTradeModal";
 import SettingsPage from "./components/settings/SettingsPage";
+import CustomChartsPage from "./components/analysis/CustomChartsPage";
 
 // Types
 import { 
@@ -19,7 +21,8 @@ import {
   NewTradeData,
   EditingCell,
   ErrorCell,
-  DefaultValues
+  DefaultValues,
+  CustomChartScript
 } from "./types";
 
 // Hooks
@@ -27,7 +30,8 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 
 // Utils
 import { exportToCSV, importFromCSV } from "./utils/fileUtils";
-import { validateCellValue } from "./utils/tradeUtils";
+import { validateCellValue, calculatePnL, determineExitReason, migrateLegacyTrades } from "./utils/tradeUtils";
+import { getDefaultChartScripts } from "./utils/chartScriptUtils";
 
 // Default configurations
 import { defaultTradeFields, demoTrades } from "./data/defaults";
@@ -40,13 +44,20 @@ function App() {
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);  // Local storage hooks
   const [userTrades, setUserTrades] = useLocalStorage<Trade[]>('tradelog_trades', []);
   const [tradeFields, setTradeFields] = useLocalStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
+  const [customScripts, setCustomScripts] = useLocalStorage<CustomChartScript[]>('tradelog_custom_scripts', getDefaultChartScripts());
   const [filePath, setFilePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
-  const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
-  const [defaultValues, setDefaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
-    pnl: '0',
-    qty: '1',
-    price: '100',
-    fees: '1'
+  const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");  const [defaultValues, setDefaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
+    qty: '100',
+    entryPrice: '150.00',
+    exitPrice: '155.00',
+    stopLoss: '145.00',
+    takeProfit: '160.00',
+    fees: '2.50',
+    status: 'Closed',
+    strategy: 'Swing Trading',
+    // Campi legacy
+    price: '155.00',
+    pnl: '500.00'
   });
 
   // Filters and editing state
@@ -61,10 +72,10 @@ function App() {
   });
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [errorCell, setErrorCell] = useState<ErrorCell | null>(null);
-
-  // Combine demo trades with user trades
+  // Combine demo trades with user trades and apply migration
   const allTrades = useMemo(() => {
-    return userTrades.length > 0 ? userTrades : demoTrades;
+    const trades = userTrades.length > 0 ? userTrades : demoTrades;
+    return migrateLegacyTrades(trades);
   }, [userTrades]);
   // Filtered and sorted trades
   const filteredAndSortedTrades = useMemo(() => {
@@ -77,13 +88,11 @@ function App() {
       if (filters.minPnL && trade.pnl < parseFloat(filters.minPnL)) return false;
       if (filters.maxPnL && trade.pnl > parseFloat(filters.maxPnL)) return false;
       return true;
-    });
+    });    return filtered.sort((a: Trade, b: Trade) => {
+      let aValue: string | number = a[sortField] ?? '';
+      let bValue: string | number = b[sortField] ?? '';
 
-    return filtered.sort((a: Trade, b: Trade) => {
-      let aValue: string | number = a[sortField];
-      let bValue: string | number = b[sortField];
-
-      if (sortField === "date") {
+      if (sortField === "date" || sortField === "entryDate" || sortField === "exitDate") {
         aValue = new Date(aValue as string).getTime();
         bValue = new Date(bValue as string).getTime();
       }
@@ -122,23 +131,52 @@ function App() {
       minPnL: "",
       maxPnL: "",
     });
-  };
-
-  const handleAddTrade = (tradeData: NewTradeData) => {
+  };  const handleAddTrade = (tradeData: NewTradeData) => {
     const newTrade: Trade = {
       id: Date.now(),
-      date: tradeData.date || new Date().toISOString().split("T")[0],
+      entryDate: tradeData.entryDate || new Date().toISOString().split("T")[0],
+      exitDate: tradeData.exitDate || undefined,
       symbol: tradeData.symbol || "",
       type: (tradeData.type as "Buy" | "Sell") || "Buy",
       qty: parseFloat(tradeData.qty || defaultValues.qty || "1"),
-      price: parseFloat(tradeData.price || defaultValues.price || "100"),
-      pnl: parseFloat(tradeData.pnl || defaultValues.pnl || "0"),
+      entryPrice: parseFloat(tradeData.entryPrice || defaultValues.entryPrice || "100"),
+      exitPrice: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : undefined,
+      stopLoss: tradeData.stopLoss ? parseFloat(tradeData.stopLoss) : undefined,
+      takeProfit: tradeData.takeProfit ? parseFloat(tradeData.takeProfit) : undefined,
+      exitReason: tradeData.exitReason as "Stop Loss" | "Take Profit" | "Manual" | "Time" | "Partial" | undefined,
+      pnl: 0, // Sarà calcolato automaticamente se il trade è chiuso
       fees: parseFloat(tradeData.fees || defaultValues.fees || "1"),
-      strategy: tradeData.strategy || "Manual",
+      strategy: tradeData.strategy || defaultValues.strategy || "Manual",
+      status: (tradeData.status as "Open" | "Closed") || "Open",
+      // Nuovi campi per tracking profit target
+      hitProfitTarget: tradeData.hitProfitTarget === "true" || false,
+      actualEntryPrice: tradeData.actualEntryPrice ? parseFloat(tradeData.actualEntryPrice) : undefined,
+      actualExitPrice: tradeData.actualExitPrice ? parseFloat(tradeData.actualExitPrice) : undefined,
+      // Campi legacy per compatibilità
+      date: tradeData.exitDate || tradeData.entryDate || new Date().toISOString().split("T")[0],
+      price: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : parseFloat(tradeData.entryPrice || defaultValues.entryPrice || "100"),
     };
 
-    // Calcola P&L basico (simulazione)
-    newTrade.pnl = (Math.random() - 0.5) * 1000;
+    // Se il trade è chiuso e ha un exit price, calcola automaticamente il P&L
+    if (newTrade.status === "Closed" && newTrade.exitPrice) {
+      const calculatedPnL = calculatePnL(
+        newTrade.type,
+        newTrade.entryPrice,
+        newTrade.exitPrice,
+        newTrade.qty,
+        newTrade.fees
+      );
+      newTrade.pnl = calculatedPnL;
+      
+      // Determina il motivo di uscita se non specificato
+      if (!newTrade.exitReason) {        newTrade.exitReason = determineExitReason(
+          newTrade.type,
+          newTrade.exitPrice,
+          newTrade.stopLoss,
+          newTrade.takeProfit
+        );
+      }
+    }
 
     // Salva il trade
     setUserTrades((prevTrades: Trade[]) => [...prevTrades, newTrade]);
@@ -250,15 +288,17 @@ function App() {
       alert('La selezione cartella è disponibile solo nella versione desktop (Electron) dell\'applicazione.');
     }
   };
-
   // Render main content based on active tab
   const renderMainContent = () => {
+    console.log('renderMainContent called with activeTab:', activeTab);
+    
     switch (activeTab) {
       case "Dashboard":
         return <Dashboard trades={allTrades} />;
       
       case "Trades":
-        return (          <TradesPage
+        return (
+          <TradesPage
             trades={filteredAndSortedTrades}
             tradeFields={tradeFields}
             defaultValues={defaultValues}
@@ -281,11 +321,14 @@ function App() {
         );
       
       case "Analysis":
-        return (
-          <div className="coming-soon">
-            <h3>Analysis</h3>
-            <p>Advanced analytics and charts coming soon!</p>
-          </div>
+        console.log('Rendering Analysis tab');
+        console.log('Trades available:', allTrades.length);
+        console.log('Custom scripts available:', customScripts.length);        return (
+          <CustomChartsPage
+            trades={allTrades}
+            customScripts={customScripts}
+            onUpdateScripts={setCustomScripts}
+          />
         );
         case "Settings":        return (
           <SettingsPage
