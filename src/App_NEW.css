@@ -4,6 +4,8 @@
 @import './styles/trades.css';
 @import './styles/table.css';
 @import './styles/modal.css';
+@import './styles/settings.css';
+@import './styles/fields.css';
 
 /* Global App Styles */
 .app {

@@ -6,6 +6,7 @@ import Header from "./components/layout/Header";
 import Dashboard from "./components/dashboard/Dashboard";
 import TradesPage from "./components/trades/TradesPage";
 import AddTradeModal from "./components/modals/AddTradeModal";
+import SettingsPage from "./components/settings/SettingsPage";
 
 // Types
 import { 
@@ -36,13 +37,12 @@ function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("Dashboard");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
-    // Local storage hooks
+  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);  // Local storage hooks
   const [userTrades, setUserTrades] = useLocalStorage<Trade[]>('tradelog_trades', []);
-  const [tradeFields] = useLocalStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
-  const [filePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
-  const [destinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
-  const [defaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
+  const [tradeFields, setTradeFields] = useLocalStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
+  const [filePath, setFilePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
+  const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
+  const [defaultValues, setDefaultValues] = useLocalStorage<DefaultValues>('tradelog_default_values', {
     pnl: '0',
     qty: '1',
     price: '100',
@@ -241,6 +241,23 @@ function App() {
     }
   };
 
+  // Settings handlers
+  const selectDestinationFolder = async () => {
+    if (window.electronAPI && window.electronAPI.selectFolder) {
+      try {
+        const result = await window.electronAPI.selectFolder();
+        if (!result.canceled && result.filePaths.length > 0) {
+          setDestinationPath(result.filePaths[0]);
+        }
+      } catch (error) {
+        console.error('Error selecting folder:', error);
+        alert('Errore nella selezione della cartella. Assicurati di usare la versione Electron dell\'app.');
+      }
+    } else {
+      alert('La selezione cartella è disponibile solo nella versione desktop (Electron) dell\'applicazione.');
+    }
+  };
+
   // Render main content based on active tab
   const renderMainContent = () => {
     switch (activeTab) {
@@ -279,13 +296,18 @@ function App() {
             <p>Advanced analytics and charts coming soon!</p>
           </div>
         );
-      
-      case "Settings":
-        return (
-          <div className="coming-soon">
-            <h3>Settings</h3>
-            <p>Configuration options coming soon!</p>
-          </div>
+        case "Settings":        return (
+          <SettingsPage
+            filePath={filePath}
+            destinationPath={destinationPath}
+            defaultValues={defaultValues}
+            tradeFields={tradeFields}
+            onFilePathChange={setFilePath}
+            onDestinationPathChange={setDestinationPath}
+            onDefaultValuesChange={setDefaultValues}
+            onTradeFieldsUpdate={setTradeFields}
+            onSelectDestinationFolder={selectDestinationFolder}
+          />
         );
       
       default:
