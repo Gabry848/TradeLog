@@ -12,7 +12,6 @@ interface TradesPageProps {
   sortField: SortField;
   sortDirection: SortDirection;
   editingCell: EditingCell | null;
-  savedCell: EditingCell | null;
   errorCell: ErrorCell | null;
   onFilterChange: (field: keyof FilterState, value: string) => void;
   onClearFilters: () => void;
@@ -34,7 +33,6 @@ const TradesPage: React.FC<TradesPageProps> = ({
   sortField,
   sortDirection,
   editingCell,
-  savedCell,
   errorCell,
   onFilterChange,
   onClearFilters,
@@ -66,15 +64,13 @@ const TradesPage: React.FC<TradesPageProps> = ({
             onAddTrade={onAddTrade}
           />
         </div>
-        
-        <TradesTable
+          <TradesTable
           trades={trades}
           tradeFields={tradeFields}
           defaultValues={defaultValues}
           sortField={sortField}
           sortDirection={sortDirection}
           editingCell={editingCell}
-          savedCell={savedCell}
           errorCell={errorCell}
           onSort={onSort}
           onCellClick={onCellClick}

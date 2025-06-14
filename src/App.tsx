@@ -59,9 +59,7 @@ function App() {
     minPnL: "",
     maxPnL: "",
   });
-
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
-  const [savedCell, setSavedCell] = useState<EditingCell | null>(null);
   const [errorCell, setErrorCell] = useState<ErrorCell | null>(null);
 
   // Combine demo trades with user trades
@@ -179,13 +177,9 @@ function App() {
     };
     reader.readAsText(file);
     event.target.value = '';
-  };
-
-  const handleExport = async () => {
-    const result = await exportToCSV(allTrades, tradeFields, filePath, destinationPath, defaultValues);
-    if (result.success) {
-      alert(`Export completato!\n${result.message}\n\nDati: ${allTrades.length} trade esportati`);
-    }
+  };  const handleExport = async () => {
+    await exportToCSV(allTrades, tradeFields, filePath, destinationPath, defaultValues);
+    // Salvataggio silenzioso - nessun messaggio di conferma
   };
 
   // Cell editing handlers
@@ -194,7 +188,6 @@ function App() {
       setEditingCell({ tradeId, fieldId });
     }
   };
-
   const handleCellChange = (tradeId: number, fieldId: string, newValue: string) => {
     const field = tradeFields.find(f => f.id === fieldId);
     const validationError = validateCellValue(fieldId, newValue, field?.type || 'text');
@@ -221,21 +214,21 @@ function App() {
         return trade;
       });
       
-      setTimeout(() => handleExport(), 100);
-      setSavedCell({ tradeId, fieldId });
-      setTimeout(() => setSavedCell(null), 2000);
-      
+      // Non salvare automaticamente, lascia che sia l'utente a decidere quando salvare
       return updatedTrades;
     });
   };
-
   const handleCellBlur = () => {
     setEditingCell(null);
+    // Salva il file quando si esce dal campo (per le select e quando si clicca fuori)
+    setTimeout(() => handleExport(), 100);
   };
 
   const handleCellKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setEditingCell(null);
+      // Salva il file quando si preme Invio
+      setTimeout(() => handleExport(), 100);
     } else if (e.key === 'Escape') {
       setEditingCell(null);
     }
@@ -265,8 +258,7 @@ function App() {
         return <Dashboard trades={allTrades} />;
       
       case "Trades":
-        return (
-          <TradesPage
+        return (          <TradesPage
             trades={filteredAndSortedTrades}
             tradeFields={tradeFields}
             defaultValues={defaultValues}
@@ -274,7 +266,6 @@ function App() {
             sortField={sortField}
             sortDirection={sortDirection}
             editingCell={editingCell}
-            savedCell={savedCell}
             errorCell={errorCell}
             onFilterChange={handleFilterChange}
             onClearFilters={clearFilters}

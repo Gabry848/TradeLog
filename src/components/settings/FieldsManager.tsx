@@ -6,6 +6,34 @@ interface FieldsManagerProps {
   onFieldsUpdate: (fields: TradeField[]) => void;
 }
 
+// Componente OptionsInput separato per evitare ricreazioni
+const OptionsInput: React.FC<{ 
+  initialOptions?: string[], 
+  onChange: (options: string[]) => void 
+}> = React.memo(({ initialOptions = [], onChange }) => {
+  const [optionsText, setOptionsText] = useState(() => initialOptions.join(', '));
+
+  const handleChange = (value: string) => {
+    setOptionsText(value);
+    const optionsArray = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+    onChange(optionsArray);
+  };
+
+  return (
+    <div className="form-group">
+      <label>Opzioni (separate da virgola)</label>
+      <input
+        type="text"
+        value={optionsText}
+        onChange={(e) => handleChange(e.target.value)}
+        placeholder="Opzione 1, Opzione 2, Opzione 3"
+        className="config-input"
+      />
+      <small>Inserisci le opzioni separate da virgola</small>
+    </div>
+  );
+});
+
 const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpdate }) => {
   const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<TradeField | null>(null);
@@ -94,45 +122,26 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
     const updatedFields = tradeFields.map(field =>
       field.id === fieldId ? { ...field, enabled: !field.enabled } : field
     );
-    onFieldsUpdate(updatedFields);
-  };
+    onFieldsUpdate(updatedFields);  };
 
-  const handleOptionsChange = (options: string[], isEditing = false) => {
+  const handleOptionsChange = React.useCallback((options: string[], isEditing = false) => {
     const optionsArray = options.filter(opt => opt.trim() !== '');
     
-    if (isEditing && editingField) {
-      setEditingField({ ...editingField, options: optionsArray });
+    if (isEditing) {
+      setEditingField(prev => prev ? { ...prev, options: optionsArray } : null);
     } else {
-      setNewField({ ...newField, options: optionsArray });
+      setNewField(prev => ({ ...prev, options: optionsArray }));
     }
-  };
+  }, []);
 
-  const OptionsInput: React.FC<{ 
-    options: string[] | undefined, 
-    onChange: (options: string[]) => void 
-  }> = ({ options = [], onChange }) => {
-    const [optionsText, setOptionsText] = useState(options.join('\n'));
+  // Callback memoizzati per le opzioni - ora sono completamente stabili
+  const handleNewFieldOptionsChange = React.useCallback((options: string[]) => {
+    handleOptionsChange(options, false);
+  }, [handleOptionsChange]);
 
-    const handleChange = (value: string) => {
-      setOptionsText(value);
-      const optionsArray = value.split('\n').map(opt => opt.trim()).filter(opt => opt);
-      onChange(optionsArray);
-    };
-
-    return (
-      <div className="form-group">
-        <label>Opzioni (una per riga)</label>
-        <textarea
-          value={optionsText}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder="Opzione 1&#10;Opzione 2&#10;Opzione 3"
-          rows={4}
-          className="config-input"
-        />
-        <small>Inserisci una opzione per riga</small>
-      </div>
-    );
-  };
+  const handleEditFieldOptionsChange = React.useCallback((options: string[]) => {
+    handleOptionsChange(options, true);
+  }, [handleOptionsChange]);
 
   return (
     <div className="fields-manager">
@@ -307,12 +316,10 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     <span className="checkbox-text">Campo obbligatorio</span>
                   </label>
                 </div>
-              </div>
-
-              {newField.type === 'select' && (
+              </div>              {newField.type === 'select' && (
                 <OptionsInput
-                  options={newField.options}
-                  onChange={(options) => handleOptionsChange(options)}
+                  initialOptions={newField.options || []}
+                  onChange={handleNewFieldOptionsChange}
                 />
               )}
 
@@ -411,12 +418,10 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     <small>La proprietà "obbligatorio" dei campi sistema non può essere modificata</small>
                   )}
                 </div>
-              </div>
-
-              {editingField.type === 'select' && (
+              </div>              {editingField.type === 'select' && (
                 <OptionsInput
-                  options={editingField.options}
-                  onChange={(options) => handleOptionsChange(options, true)}
+                  initialOptions={editingField.options || []}
+                  onChange={handleEditFieldOptionsChange}
                 />
               )}
 

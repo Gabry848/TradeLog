@@ -10,7 +10,6 @@ interface TradesTableProps {
   sortField: SortField;
   sortDirection: SortDirection;
   editingCell: EditingCell | null;
-  savedCell: EditingCell | null;
   errorCell: ErrorCell | null;
   onSort: (field: SortField) => void;
   onCellClick: (tradeId: number, fieldId: string) => void;
@@ -26,7 +25,6 @@ const TradesTable: React.FC<TradesTableProps> = ({
   sortField,
   sortDirection,
   editingCell,
-  savedCell,
   errorCell,
   onSort,
   onCellClick,
@@ -54,20 +52,18 @@ const TradesTable: React.FC<TradesTableProps> = ({
       </>
     );
   };
-
   const renderTableRow = (trade: Trade) => {
     return tradeFields
       .filter(field => field.enabled)
       .map(field => {
         const value = trade[field.id] ?? getDefaultValue(field.type, field.id, defaultValues);
         const isEditing = editingCell?.tradeId === trade.id && editingCell?.fieldId === field.id;
-        const isSaved = savedCell?.tradeId === trade.id && savedCell?.fieldId === field.id;
         const hasError = errorCell?.tradeId === trade.id && errorCell?.fieldId === field.id;
         
         const renderEditableCell = (content: React.ReactNode, fieldId: string) => (
           <div 
             key={field.id} 
-            className={`editable-cell ${isEditing ? 'editing' : ''} ${isSaved ? 'saved' : ''} ${hasError ? 'error' : ''}`}
+            className={`editable-cell ${isEditing ? 'editing' : ''} ${hasError ? 'error' : ''}`}
             onClick={() => onCellClick(trade.id, fieldId)}
           >
             <div className="edit-hint">
