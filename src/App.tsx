@@ -179,10 +179,10 @@ function App() {
   const [tradeFields, setTradeFields] =
     useState<TradeField[]>(defaultTradeFields);
   const [chartConfigs, setChartConfigs] =
-    useState<ChartConfig[]>(defaultChartConfigs);
-  const [userTrades, setUserTrades] = useState<Trade[]>([]);
+    useState<ChartConfig[]>(defaultChartConfigs);  const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [filePath, setFilePath] = useState<string>("tradelog.csv");
-  const [destinationPath, setDestinationPath] = useState<string>("");
+  const [destinationPath, setDestinationPath] = useState<string>("");  const [editingCell, setEditingCell] = useState<{tradeId: number, fieldId: string} | null>(null);  const [savedCell, setSavedCell] = useState<{tradeId: number, fieldId: string} | null>(null);
+  const [errorCell, setErrorCell] = useState<{tradeId: number, fieldId: string, message: string} | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     symbol: "",
     type: "",
@@ -656,62 +656,195 @@ function App() {
         }
       }
     });
+      return initializedTrade;  };
+
+  // Funzione di validazione per i valori delle celle
+  const validateCellValue = (fieldId: string, value: string, fieldType: string): string | null => {
+    if (fieldType === 'number') {
+      const num = parseFloat(value);
+      if (isNaN(num)) {
+        return 'Must be a valid number';
+      }
+      if (fieldId === 'qty' && num < 0) {
+        return 'Quantity cannot be negative';
+      }
+      if (fieldId === 'price' && num < 0) {
+        return 'Price cannot be negative';
+      }
+    }
     
-    return initializedTrade;
+    if (fieldId === 'symbol' && value.trim().length === 0) {
+      return 'Symbol is required';
+    }
+    
+    if (fieldId === 'date' && fieldType === 'date') {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) {
+        return 'Must be a valid date';
+      }
+    }
+    
+    return null; // No error
   };
 
+  // Funzioni per la modifica inline dei trade
+  const handleCellClick = (tradeId: number, fieldId: string) => {
+    if (fieldId !== 'id') { // Non permettere modifica dell'ID
+      setEditingCell({ tradeId, fieldId });
+    }
+  };  const handleCellChange = (tradeId: number, fieldId: string, newValue: string) => {
+    const field = tradeFields.find(f => f.id === fieldId);
+    const validationError = validateCellValue(fieldId, newValue, field?.type || 'text');
+    
+    if (validationError) {
+      setErrorCell({ tradeId, fieldId, message: validationError });
+      setTimeout(() => setErrorCell(null), 3000);
+      return;
+    }
+    
+    // Pulisci eventuali errori precedenti
+    setErrorCell(null);
+    
+    setUserTrades(prevTrades => {
+      const updatedTrades = prevTrades.map(trade => {
+        if (trade.id === tradeId) {
+          let processedValue: string | number = newValue;
+          
+          // Converte il valore basato sul tipo di campo
+          if (field?.type === 'number') {
+            processedValue = parseFloat(newValue) || 0;
+          }
+          
+          return { ...trade, [fieldId]: processedValue };
+        }
+        return trade;
+      });
+      
+      // Salva automaticamente
+      localStorage.setItem('tradelog_trades', JSON.stringify(updatedTrades));
+      setTimeout(() => exportToCSV(), 100);
+      
+      // Mostra feedback di salvataggio
+      setSavedCell({ tradeId, fieldId });
+      setTimeout(() => setSavedCell(null), 2000);
+      
+      return updatedTrades;
+    });
+  };
+
+  const handleCellBlur = () => {
+    setEditingCell(null);
+  };  const handleCellKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setEditingCell(null);
+    } else if (e.key === 'Escape') {
+      setEditingCell(null);
+    }
+  };
   // Funzione per renderizzare dinamicamente gli header della tabella
   const renderTableHeaders = () => {
-    return tradeFields
-      .filter(field => field.enabled)
-      .map(field => (
-        <div 
-          key={field.id}
-          onClick={() => handleSort(field.id as SortField)} 
-          className="sortable"
-        >
-          {field.label} {sortField === field.id && (sortDirection === 'asc' ? '↑' : '↓')}
-        </div>
-      ))
-  }
-  // Funzione per renderizzare dinamicamente le celle di una riga
+    const enabledFields = tradeFields.filter(field => field.enabled);
+    
+    return (
+      <>
+        <style>
+          {`:root { --column-count: ${enabledFields.length}; }`}
+        </style>
+        {enabledFields.map(field => (
+          <div 
+            key={field.id}
+            onClick={() => handleSort(field.id as SortField)} 
+            className="sortable"
+          >
+            {field.label} {sortField === field.id && (sortDirection === 'asc' ? '↑' : '↓')}
+          </div>
+        ))}
+      </>
+    );
+  };// Funzione per renderizzare dinamicamente le celle di una riga
   const renderTableRow = (trade: Trade) => {
     return tradeFields
       .filter(field => field.enabled)
-      .map(field => {
-        const value = trade[field.id] ?? getDefaultValue(field.type, field.id)
-          switch (field.id) {
+      .map(field => {        const value = trade[field.id] ?? getDefaultValue(field.type, field.id);
+        const isEditing = editingCell?.tradeId === trade.id && editingCell?.fieldId === field.id;
+        const isSaved = savedCell?.tradeId === trade.id && savedCell?.fieldId === field.id;
+        const hasError = errorCell?.tradeId === trade.id && errorCell?.fieldId === field.id;
+        
+        const renderEditableCell = (content: React.ReactNode, fieldId: string) => (
+          <div 
+            key={field.id} 
+            className={`editable-cell ${isEditing ? 'editing' : ''} ${isSaved ? 'saved' : ''} ${hasError ? 'error' : ''}`}
+            onClick={() => handleCellClick(trade.id, fieldId)}
+          >
+            <div className="edit-hint">
+              {hasError ? errorCell?.message : 'Click to edit'}
+            </div>
+            {isEditing ? (
+              field.id === 'type' ? (
+                <select
+                  className="editable-select"
+                  value={String(value)}
+                  onChange={(e) => handleCellChange(trade.id, fieldId, e.target.value)}
+                  onBlur={handleCellBlur}                  onKeyDown={(e) => handleCellKeyDown(e)}
+                  autoFocus
+                >
+                  <option value="Buy">Buy</option>
+                  <option value="Sell">Sell</option>
+                </select>
+              ) : (
+                <input
+                  type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                  className="editable-input"
+                  value={String(value)}
+                  onChange={(e) => handleCellChange(trade.id, fieldId, e.target.value)}
+                  onBlur={handleCellBlur}
+                  onKeyDown={(e) => handleCellKeyDown(e)}
+                  autoFocus
+                  step={field.type === 'number' ? '0.01' : undefined}
+                />
+              )
+            ) : (
+              content
+            )}
+          </div>
+        );
+        
+        switch (field.id) {
+          case 'id':
+            return <div key={field.id} className="id-cell">{value}</div>
           case 'date':
-            return <div key={field.id}>{formatDate(String(value))}</div>
+            return renderEditableCell(formatDate(String(value)), field.id)
           case 'symbol':
-            return <div key={field.id} className="symbol">{String(value)}</div>
+            return renderEditableCell(<span className="symbol">{String(value)}</span>, field.id)
           case 'type':
-            return (
-              <div key={field.id} className={`trade-type ${String(value).toLowerCase()}`}>
+            return renderEditableCell(
+              <span className={`trade-type ${String(value).toLowerCase()}`}>
                 {String(value)}
-              </div>
+              </span>, 
+              field.id
             )
           case 'qty':
-            return <div key={field.id}>{Number(value).toLocaleString()}</div>
+            return renderEditableCell(Number(value).toLocaleString(), field.id)
           case 'price':
-            return <div key={field.id}>${Number(value).toFixed(2)}</div>
+            return renderEditableCell(`$${Number(value).toFixed(2)}`, field.id)
           case 'fees':
-            return <div key={field.id}>${Number(value).toFixed(2)}</div>
+            return renderEditableCell(`$${Number(value).toFixed(2)}`, field.id)
           case 'pnl': {
             const pnlValue = Number(value)
-            return (
-              <div key={field.id} className={pnlValue >= 0 ? "positive" : "negative"}>
+            return renderEditableCell(
+              <span className={pnlValue >= 0 ? "positive" : "negative"}>
                 {pnlValue >= 0 ? "+" : ""}${Math.abs(pnlValue).toFixed(2)}
-              </div>
+              </span>,
+              field.id
             )
           }
           case 'strategy':
-            return <div key={field.id} className="strategy">{value}</div>
+            return renderEditableCell(<span className="strategy">{String(value)}</span>, field.id)
           default:
             if (field.type === 'number') {
-              return <div key={field.id}>{Number(value).toFixed(2)}</div>
+              return renderEditableCell(Number(value).toFixed(2), field.id)
             }
-            return <div key={field.id}>{value}</div>
+            return renderEditableCell(String(value), field.id)
         }
       })
   }
