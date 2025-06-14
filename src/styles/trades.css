@@ -1,0 +1,180 @@
+/* Trades Components */
+.trades-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Filters Section */
+.filters-section {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3a3d45;
+}
+
+.filters-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 0.75rem;
+  background-color: #2a2d35;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.filter-group input::placeholder {
+  color: #6b7280;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: end;
+}
+
+.clear-filters-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+/* Trades Section */
+.trades-section {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3a3d45;
+}
+
+.trades-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.trades-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.trades-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.trades-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Import/Export Buttons */
+.import-btn,
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.import-btn {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+.import-btn:hover {
+  background-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.export-btn {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.export-btn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.add-trade-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #646cff;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-trade-btn:hover {
+  background-color: #535bf2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+}
+
+.add-trade-btn svg {
+  stroke-width: 2.5;
+}

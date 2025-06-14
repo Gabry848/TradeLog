@@ -1,0 +1,63 @@
+/* Layout Components */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: #1e2025;
+  border-bottom: 1px solid #3a3d45;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.nav {
+  display: flex;
+  gap: 0;
+}
+
+.nav-button {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+}
+
+.nav-button:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-button.active {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #6b7280;
+  cursor: pointer;
+}
+
+.main {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
