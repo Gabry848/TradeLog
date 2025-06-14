@@ -71,7 +71,7 @@ const TradesTable: React.FC<TradesTableProps> = ({
             onClick={() => onCellClick(trade.id, fieldId)}
           >
             <div className="edit-hint">
-              {hasError ? errorCell?.message : 'Click to edit'}
+              {hasError ? errorCell?.message : (isEditing ? 'Click to edit' : '')}
             </div>
             {isEditing ? (
               field.id === 'type' ? (

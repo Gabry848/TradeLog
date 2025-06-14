@@ -50,6 +50,14 @@ export const defaultTradeFields: TradeField[] = [
     placeholder: "9.95",
     enabled: true,
   },
+  {
+    id: "pnl",
+    label: "Profit/Loss",
+    type: "number",
+    required: true,
+    placeholder: "0.00",
+    enabled: true,
+  },
 ];
 
 export const defaultChartConfigs: ChartConfig[] = [
