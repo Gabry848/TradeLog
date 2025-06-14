@@ -1,13 +1,54 @@
 import React from 'react';
+import { Trade } from '../../types';
+import { generateEquityCurveData } from '../../utils/chartUtils';
 
-const EquityChart: React.FC = () => {
+interface EquityChartProps {
+  trades: Trade[];
+}
+
+const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
+  const equityData = generateEquityCurveData(trades);
+  
+  // Calcola i limiti per il grafico
+  const values = equityData.map(d => d.value || 0);
+  const minValue = Math.min(0, ...values);
+  const maxValue = Math.max(0, ...values);
+  const range = maxValue - minValue || 100; // Evita divisione per zero
+  
+  // Genera i punti SVG
+  const svgWidth = 800;
+  const svgHeight = 200;
+  const padding = 50;
+  const chartWidth = svgWidth - 2 * padding;
+  const chartHeight = svgHeight - 2 * padding;
+  
+  const points = equityData.length > 0 
+    ? equityData.map((point, index) => {
+        const x = padding + (index / (equityData.length - 1 || 1)) * chartWidth;
+        const y = padding + chartHeight - (((point.value || 0) - minValue) / range) * chartHeight;
+        return `${x},${y}`;
+      }).join(' ')
+    : `${padding},${svgHeight - padding} ${svgWidth - padding},${svgHeight - padding}`;
+
   return (
     <div className="equity-section">
       <h3>Equity Curve</h3>
       <div className="equity-chart-large">
-        <svg viewBox="0 0 800 200">
+        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
+          {/* Linea dello zero */}
+          {minValue < 0 && maxValue > 0 && (
+            <line
+              x1={padding}
+              y1={padding + chartHeight - ((0 - minValue) / range) * chartHeight}
+              x2={svgWidth - padding}
+              y2={padding + chartHeight - ((0 - minValue) / range) * chartHeight}
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth="1"
+              strokeDasharray="5,5"
+            />
+          )}
           <polyline
-            points="50,150 80,145 110,140 140,138 170,135 200,130 230,125 260,120 290,115 320,110 350,105 380,100 410,95 440,90 470,85 500,80 530,75 560,70 590,65 620,60 650,55 680,50 710,45 740,40 770,35"
+            points={points}
             fill="none"
             stroke="white"
             strokeWidth="2"

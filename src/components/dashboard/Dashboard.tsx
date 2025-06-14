@@ -19,10 +19,8 @@ const Dashboard: React.FC<DashboardProps> = ({ trades }) => {
       <div className="metrics-grid">
         <MetricCard title="Total P&L" value={totalPnL} />
         <MetricCard title="Win Rate" value={winRate} isPercentage showChart />
-      </div>
-
-      {/* Equity Curve */}
-      <EquityChart />
+      </div>      {/* Equity Curve */}
+      <EquityChart trades={trades} />
 
       {/* Recent Trades */}
       <RecentTradesTable trades={trades} />
