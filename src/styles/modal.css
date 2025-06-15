@@ -19,7 +19,7 @@
   border-radius: 16px;
   border: 1px solid #3a3d45;
   width: 100%;
-  max-width: 700px;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
@@ -254,4 +254,129 @@
 .calculated-field:focus {
   outline: none !important;
   box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.3) !important;
+}
+
+/* Field Modal Specific Styles */
+.modal-content.field-modal {
+  max-width: 1100px;
+  width: 95vw;
+}
+
+.field-modal .modal-body {
+  padding: 2.5rem;
+}
+
+.field-modal .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.field-modal .form-group {
+  margin-bottom: 2rem;
+}
+
+.field-modal .form-group.full-width {
+  grid-column: 1 / -1; /* Prende tutta la larghezza */
+}
+
+.field-modal .formula-editor {
+  grid-column: 1 / -1; /* Prende tutta la larghezza */
+}
+
+.field-modal .predefined-formulas {
+  grid-column: 1 / -1; /* Prende tutta la larghezza */
+  margin-top: 2rem;
+}
+
+/* Formule predefinite nel modal allargato */
+.field-modal .predefined-formulas {
+  background-color: #1a1d23;
+  border: 2px solid #3a3d45;
+  padding: 2.5rem;
+}
+
+.field-modal .predefined-formulas h4 {
+  font-size: 1.3rem;
+  margin-bottom: 2.5rem;
+}
+
+.field-modal .category-formulas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.field-modal .predefined-formula {
+  margin-left: 0;
+  padding: 1.5rem;
+}
+
+.field-modal .formula-info code {
+  font-size: 0.85rem;
+  padding: 0.75rem;
+}
+
+/* Ulteriori miglioramenti per modal allargati */
+.field-modal .modal-header h3 {
+  font-size: 1.5rem;
+}
+
+.field-modal .checkbox-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(100, 108, 255, 0.05);
+  border: 1px solid rgba(100, 108, 255, 0.2);
+  border-radius: 8px;
+}
+
+.field-modal .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.field-modal .checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #646cff;
+}
+
+.field-modal .form-actions {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #3a3d45;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-end;
+}
+
+.field-modal .form-actions button {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 140px;
+}
+
+/* Responsive per form più piccoli */
+@media (max-width: 1200px) {
+  .field-modal .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .field-modal .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .field-modal {
+    max-width: 95vw !important;
+    margin: 1rem;
+  }
 }

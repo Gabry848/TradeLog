@@ -493,20 +493,23 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     />
                   ) : null}
                   <small>Valore utilizzato quando il campo è vuoto o per nuovi trade</small>
-                </div>
-              </div>{newField.type === 'select' && (
-                <OptionsInput
-                  initialOptions={newField.options || []}
-                  onChange={handleNewFieldOptionsChange}
-                />
-              )}
+                </div>              </div>
 
-              {newField.type === 'calculated' && (
-                <CalculatedFieldEditor
-                  field={newField}
-                  onFieldChange={setNewField}
-                  availableFields={tradeFields}
-                />
+              {newField.type === 'select' && (
+                <div className="form-group full-width">
+                  <OptionsInput
+                    initialOptions={newField.options || []}
+                    onChange={handleNewFieldOptionsChange}
+                  />
+                </div>
+              )}              {newField.type === 'calculated' && (
+                <div className="form-group full-width">
+                  <CalculatedFieldEditor
+                    field={newField}
+                    onFieldChange={setNewField}
+                    availableFields={tradeFields}
+                  />
+                </div>
               )}
 
               <div className="form-actions">
