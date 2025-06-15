@@ -68,11 +68,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
         </div>
 
         <form className="trade-form" onSubmit={handleSubmit}>
-          <div className="form-grid">
-            {tradeFields
+          <div className="form-grid">            {tradeFields
               .filter((field) => field.enabled)
               .map((field) => (
-                <div key={field.id} className={`form-group ${field.id === 'pnl' ? 'pnl-field' : ''}`}>
+                <div key={field.id} className="form-group">
                   <label htmlFor={field.id}>
                     {field.label} {field.required && "*"}
                     {field.id === 'pnl' && (
@@ -105,7 +104,9 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                       {...(field.type === "number"
                         ? {
                             step: field.id === "qty" ? "1" : "0.01",
-                            min: "0",
+                            ...(field.id === "qty" || field.id === "entryPrice" || field.id === "exitPrice" || field.id === "stopLoss" || field.id === "takeProfit" || field.id === "targetProfit" || field.id === "fees" || field.id === "actualEntryPrice" || field.id === "actualExitPrice" || field.id === "price"
+                              ? { min: "0" }
+                              : {}),
                           }
                         : {})}
                     />

@@ -156,25 +156,4 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* Special styling for PnL field */
-.pnl-field {
-  border: 2px solid #4a90e2 !important;
-  border-radius: 8px;
-  background: rgba(74, 144, 226, 0.05);
-  padding: 8px;
-}
-
-.pnl-field label {
-  color: #4a90e2 !important;
-  font-weight: 600;
-}
-
-.pnl-field input {
-  border: 2px solid #4a90e2 !important;
-  background: rgba(74, 144, 226, 0.1);
-}
-
-.pnl-field input:focus {
-  border-color: #357abd !important;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
+/* Special styling for PnL field - REMOVED */

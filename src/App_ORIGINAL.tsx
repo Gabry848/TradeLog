@@ -2061,7 +2061,9 @@ Data saved to: ${getFullFilePath()}`
                           {...(field.type === "number"
                             ? {
                                 step: field.id === "qty" ? "1" : "0.01",
-                                min: "0",
+                                ...(field.id === "qty" || field.id === "entryPrice" || field.id === "exitPrice" || field.id === "stopLoss" || field.id === "takeProfit" || field.id === "targetProfit" || field.id === "fees" || field.id === "actualEntryPrice" || field.id === "actualExitPrice" || field.id === "price"
+                                  ? { min: "0" }
+                                  : {}),
                               }
                             : {})}
                         />
