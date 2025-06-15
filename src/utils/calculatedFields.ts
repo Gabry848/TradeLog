@@ -227,36 +227,83 @@ export function validateFormula(formula: string, fields: TradeField[]): { valid:
   }
 }
 
-// Formule predefinite comuni
+// Formule predefinite comuni organizzate per categoria
 export const PREDEFINED_FORMULAS = {
+  // Categoria: Gestione Capitale
   'capital_invested': {
     name: 'Capitale Investito',
-    description: 'Calcola il capitale investito: (capitale_totale / 100) * size',
-    formula: '({capitale_totale} / 100) * {size}',
-    dependencies: ['capitale_totale', 'size']
+    description: 'Calcola il capitale investito basato su capitale totale e percentuale di posizione',
+    formula: '({capitale_totale} / 100) * {size_percentage}',
+    dependencies: ['capitale_totale', 'size_percentage'],
+    category: 'Gestione Capitale'
   },
+  'portfolio_weight': {
+    name: 'Peso nel Portafoglio',
+    description: 'Calcola che percentuale del portafoglio rappresenta questa posizione',
+    formula: '{capitale_totale} > 0 ? (({qty} * {entryPrice}) / {capitale_totale}) * 100 : 0',
+    dependencies: ['qty', 'entryPrice', 'capitale_totale'],
+    category: 'Gestione Capitale'
+  },
+  
+  // Categoria: Analisi Rischio
   'risk_percentage': {
     name: 'Percentuale di Rischio',
-    description: 'Calcola la percentuale di rischio: (capitale_investito / capitale_totale) * 100',
-    formula: '({capitale_investito} / {capitale_totale}) * 100',
-    dependencies: ['capitale_investito', 'capitale_totale']
-  },
-  'position_value': {
-    name: 'Valore Posizione',
-    description: 'Calcola il valore della posizione: qty * entryPrice',
-    formula: '{qty} * {entryPrice}',
-    dependencies: ['qty', 'entryPrice']
-  },
-  'profit_percentage': {
-    name: 'Percentuale Profitto',
-    description: 'Calcola la percentuale di profitto: (pnl / capitale_investito) * 100',
-    formula: '({pnl} / {capitale_investito}) * 100',
-    dependencies: ['pnl', 'capitale_investito']
+    description: 'Calcola la percentuale di rischio rispetto al capitale totale',
+    formula: '{capitale_totale} > 0 ? ({capitale_investito} / {capitale_totale}) * 100 : 0',
+    dependencies: ['capitale_investito', 'capitale_totale'],
+    category: 'Analisi Rischio'
   },
   'risk_reward_ratio': {
     name: 'Risk/Reward Ratio',
-    description: 'Calcola il rapporto rischio/rendimento',
-    formula: '{takeProfit} > 0 && {stopLoss} > 0 ? Math.abs({takeProfit} - {entryPrice}) / Math.abs({entryPrice} - {stopLoss}) : 0',
-    dependencies: ['takeProfit', 'stopLoss', 'entryPrice']
+    description: 'Calcola il rapporto rischio/rendimento della posizione',
+    formula: '{takeProfit} && {stopLoss} && {entryPrice} ? Math.abs({takeProfit} - {entryPrice}) / Math.abs({entryPrice} - {stopLoss}) : 0',
+    dependencies: ['takeProfit', 'stopLoss', 'entryPrice'],
+    category: 'Analisi Rischio'
+  },
+  'max_loss_amount': {
+    name: 'Perdita Massima Potenziale',
+    description: 'Calcola la perdita massima in euro se viene colpito lo stop loss',
+    formula: '{stopLoss} && {entryPrice} && {qty} ? Math.abs(({stopLoss} - {entryPrice}) * {qty}) : 0',
+    dependencies: ['stopLoss', 'entryPrice', 'qty'],
+    category: 'Analisi Rischio'
+  },
+  
+  // Categoria: Performance
+  'position_value': {
+    name: 'Valore Posizione',
+    description: 'Calcola il valore totale della posizione al prezzo di entrata',
+    formula: '{qty} * {entryPrice}',
+    dependencies: ['qty', 'entryPrice'],
+    category: 'Performance'
+  },
+  'profit_percentage': {
+    name: 'Percentuale Profitto',
+    description: 'Calcola la percentuale di profitto rispetto al capitale investito',
+    formula: '{capitale_investito} > 0 ? ({pnl} / {capitale_investito}) * 100 : 0',
+    dependencies: ['pnl', 'capitale_investito'],
+    category: 'Performance'
+  },
+  'return_on_capital': {
+    name: 'Rendimento sul Capitale',
+    description: 'Calcola il rendimento percentuale sul capitale totale',
+    formula: '{capitale_totale} > 0 ? ({pnl} / {capitale_totale}) * 100 : 0',
+    dependencies: ['pnl', 'capitale_totale'],
+    category: 'Performance'
+  },
+  
+  // Categoria: Metriche Avanzate
+  'sharpe_approximation': {
+    name: 'Approssimazione Sharpe',
+    description: 'Stima approssimativa dello Sharpe ratio per singolo trade',
+    formula: '{pnl} > 0 ? {pnl} / Math.max({capitale_investito} * 0.02, 1) : 0',
+    dependencies: ['pnl', 'capitale_investito'],
+    category: 'Metriche Avanzate'
+  },
+  'profit_factor': {
+    name: 'Fattore di Profitto',
+    description: 'Rapporto tra potenziale guadagno e potenziale perdita',
+    formula: '{takeProfit} && {stopLoss} && {entryPrice} ? Math.abs({takeProfit} - {entryPrice}) / Math.abs({entryPrice} - {stopLoss}) : 1',
+    dependencies: ['takeProfit', 'stopLoss', 'entryPrice'],
+    category: 'Metriche Avanzate'
   }
 };

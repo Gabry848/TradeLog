@@ -12,9 +12,11 @@ const CalculatedFieldEditor: React.FC<CalculatedFieldEditorProps> = ({
   field,
   onFieldChange,
   availableFields
-}) => {
-  const [formulaError, setFormulaError] = useState<string>('');
-  const [showPredefined, setShowPredefined] = useState(false);  // Campi disponibili per le dipendenze (tutti i tipi tranne calculated)
+}) => {  const [formulaError, setFormulaError] = useState<string>('');
+  const [showPredefined, setShowPredefined] = useState(false);
+  const [highlightedFormula, setHighlightedFormula] = useState<string>('');
+
+  // Campi disponibili per le dipendenze (tutti i tipi tranne calculated)
   const selectableFields = availableFields.filter(f => 
     f.type !== 'calculated' && f.enabled
   );
@@ -45,11 +47,15 @@ const CalculatedFieldEditor: React.FC<CalculatedFieldEditorProps> = ({
     const numericValue = value === '' ? undefined : parseFloat(value);
     onFieldChange({ ...field, defaultValue: isNaN(numericValue!) ? value : numericValue });
   };
-
   const insertPredefinedFormula = (formulaKey: string) => {
     const predefined = PREDEFINED_FORMULAS[formulaKey as keyof typeof PREDEFINED_FORMULAS];
     if (predefined) {
       handleFormulaChange(predefined.formula);
+      
+      // Evidenzia brevemente la formula inserita
+      setHighlightedFormula(formulaKey);
+      setTimeout(() => setHighlightedFormula(''), 2000);
+      
       setShowPredefined(false);
     }
   };
@@ -129,27 +135,50 @@ const CalculatedFieldEditor: React.FC<CalculatedFieldEditorProps> = ({
             Operatori supportati: +, -, *, /, (), Math.round(), Math.floor(), Math.ceil()
           </small>
         </div>
-      </div>
-
-      {showPredefined && (
+      </div>      {showPredefined && (
         <div className="predefined-formulas">
           <h4>Formule Predefinite</h4>
-          {Object.entries(PREDEFINED_FORMULAS).map(([key, formula]) => (
-            <div key={key} className="predefined-formula">
-              <div className="formula-info">
-                <strong>{formula.name}</strong>
-                <p>{formula.description}</p>
-                <code>{formula.formula}</code>
+          {(() => {
+            // Raggruppa le formule per categoria
+            const categorizedFormulas = Object.entries(PREDEFINED_FORMULAS).reduce((acc, [key, formula]) => {
+              const category = formula.category || 'Generale';
+              if (!acc[category]) {
+                acc[category] = [];
+              }
+              acc[category].push([key, formula]);
+              return acc;
+            }, {} as Record<string, Array<[string, typeof PREDEFINED_FORMULAS[keyof typeof PREDEFINED_FORMULAS]]>>);
+
+            return Object.entries(categorizedFormulas).map(([category, formulas]) => (
+              <div key={category} className="formula-category">
+                <div className="category-title">
+                  {category === 'Gestione Capitale' && '💰'}
+                  {category === 'Analisi Rischio' && '⚠️'}
+                  {category === 'Performance' && '📈'}
+                  {category === 'Metriche Avanzate' && '🧮'}
+                  {category === 'Generale' && '📊'}
+                  {category}
+                </div>
+                <div className="category-formulas">                  {formulas.map(([key, formula]) => (
+                    <div key={key} className={`predefined-formula ${highlightedFormula === key ? 'highlighted' : ''}`}>
+                      <div className="formula-info">
+                        <strong>{formula.name}</strong>
+                        <p>{formula.description}</p>
+                        <code>{formula.formula}</code>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => insertPredefinedFormula(key)}
+                        className="use-formula-btn"
+                      >
+                        Usa Formula
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => insertPredefinedFormula(key)}
-                className="use-formula-btn"
-              >
-                Usa
-              </button>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TradeField } from '../../types';
 import CalculatedFieldEditor from './CalculatedFieldEditor';
 import { addExampleFields } from '../../data/exampleFields';
@@ -38,7 +38,29 @@ const OptionsInput: React.FC<{
 
 const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpdate }) => {
   const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false);
-  const [editingField, setEditingField] = useState<TradeField | null>(null);  const [newField, setNewField] = useState<Partial<TradeField>>({
+  const [editingField, setEditingField] = useState<TradeField | null>(null);
+  const [showQuickAddMenu, setShowQuickAddMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const quickAddRef = useRef<HTMLDivElement>(null);
+
+  // Chiude il menu quando si clicca fuori
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (quickAddRef.current && !quickAddRef.current.contains(event.target as Node)) {
+        setShowQuickAddMenu(false);
+      }
+    };
+
+    if (showQuickAddMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showQuickAddMenu]);
+
+  const [newField, setNewField] = useState<Partial<TradeField>>({
     id: '',
     label: '',
     type: 'text',
@@ -57,8 +79,18 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
     { value: 'select', label: '📋 Selezione' },
     { value: 'calculated', label: '🧮 Calcolato' }
   ];
-
   const coreFields = ['id', 'date', 'symbol', 'type', 'qty', 'price', 'pnl', 'fees', 'strategy'];
+
+  // Filtra i campi in base alla ricerca
+  const filteredFields = tradeFields.filter(field => {
+    const query = searchQuery.toLowerCase();
+    return (
+      field.label.toLowerCase().includes(query) ||
+      field.id.toLowerCase().includes(query) ||
+      field.type.toLowerCase().includes(query) ||
+      (field.formula && field.formula.toLowerCase().includes(query))
+    );
+  });
 
   const handleAddField = () => {
     if (!newField.id || !newField.label) {
@@ -158,40 +190,47 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
   return (
     <div className="fields-manager">      <div className="fields-header">
         <h3>🔧 Gestione Campi Operazioni</h3>
-        <div className="fields-actions">
-          <div className="quick-add-dropdown">
-            <button className="quick-add-btn">
+        <div className="fields-actions">          <div className="quick-add-dropdown" ref={quickAddRef}>
+            <button 
+              className="quick-add-btn"
+              onClick={() => setShowQuickAddMenu(!showQuickAddMenu)}
+            >
               ⚡ Aggiungi Rapidi
             </button>
-            <div className="quick-add-menu">
-              <button
-                onClick={() => {
-                  const updatedFields = addExampleFields(tradeFields, 'calculated');
-                  onFieldsUpdate(updatedFields);
-                }}
-                className="quick-add-option"
-              >
-                🧮 Campi Calcolati Base
-              </button>
-              <button
-                onClick={() => {
-                  const updatedFields = addExampleFields(tradeFields, 'portfolio');
-                  onFieldsUpdate(updatedFields);
-                }}
-                className="quick-add-option"
-              >
-                📊 Analisi Portafoglio
-              </button>
-              <button
-                onClick={() => {
-                  const updatedFields = addExampleFields(tradeFields, 'risk');
-                  onFieldsUpdate(updatedFields);
-                }}
-                className="quick-add-option"
-              >
-                ⚠️ Gestione Rischio
-              </button>
-            </div>
+            {showQuickAddMenu && (
+              <div className="quick-add-menu">
+                <button
+                  onClick={() => {
+                    const updatedFields = addExampleFields(tradeFields, 'calculated');
+                    onFieldsUpdate(updatedFields);
+                    setShowQuickAddMenu(false);
+                  }}
+                  className="quick-add-option"
+                >
+                  🧮 Campi Calcolati Base
+                </button>
+                <button
+                  onClick={() => {
+                    const updatedFields = addExampleFields(tradeFields, 'portfolio');
+                    onFieldsUpdate(updatedFields);
+                    setShowQuickAddMenu(false);
+                  }}
+                  className="quick-add-option"
+                >
+                  📊 Analisi Portafoglio
+                </button>
+                <button
+                  onClick={() => {
+                    const updatedFields = addExampleFields(tradeFields, 'risk');
+                    onFieldsUpdate(updatedFields);
+                    setShowQuickAddMenu(false);
+                  }}
+                  className="quick-add-option"
+                >
+                  ⚠️ Gestione Rischio
+                </button>
+              </div>
+            )}
           </div>
           <button
             onClick={() => setIsAddFieldModalOpen(true)}
@@ -204,15 +243,51 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
             Aggiungi Campo
           </button>
         </div>
-      </div>
-
-      <div className="fields-description">
+      </div>      <div className="fields-description">
         <p>Gestisci i campi che appariranno nel form di inserimento delle operazioni e nella tabella.</p>
       </div>
 
-      {/* Lista Campi Esistenti */}
-      <div className="fields-list">
-        {tradeFields.map((field) => (
+      <div className="fields-search-section">
+        <div className="search-bar">
+          <div className="search-input-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="search-icon">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+              type="text"
+              placeholder="Cerca campi per nome, ID, tipo o formula..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="search-clear"
+                title="Cancella ricerca"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {searchQuery && (
+          <div className="search-results-info">
+            <span>Trovati {filteredFields.length} campi su {tradeFields.length}</span>
+            {filteredFields.length === 0 && (
+              <span className="no-results">Nessun campo corrisponde alla ricerca</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Lista Campi Esistenti */}      <div className="fields-list">
+        {filteredFields.map((field) => (
           <div key={field.id} className={`field-card ${!field.enabled ? 'disabled' : ''}`}>
             <div className="field-card-header">
               <div className="field-info">
