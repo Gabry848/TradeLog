@@ -1,10 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 
-const require = createRequire(import.meta.url)
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -29,7 +28,7 @@ let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
-    title: 'TradeLog',
+    title: 'TradeLog - Trading Journal',
     icon: path.join(__dirname + '/src/assets/TradeLog.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
