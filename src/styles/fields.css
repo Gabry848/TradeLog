@@ -334,25 +334,31 @@
 
 .formula-helpers {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #2a2d35;
+  border-radius: 8px;
+  border: 1px solid #3a3d45;
 }
 
 .helper-btn {
-  padding: 0.375rem 0.75rem;
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
   background-color: #646cff;
   border: none;
   border-radius: 6px;
   color: #ffffff;
   font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .helper-btn:hover {
   background-color: #535bf2;
+  transform: translateY(-1px);
 }
 
 .field-references {
@@ -365,7 +371,8 @@
 .helper-label {
   font-size: 0.8rem;
   color: #9ca3af;
-  margin-right: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
 }
 
 .field-ref-btn {
@@ -588,6 +595,35 @@
 
 .quick-add-option:active {
   background-color: #646cff;
+}
+
+/* Field Selector Dropdown */
+.field-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.field-selector-dropdown {
+  padding: 0.5rem;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  background-color: #1e2025;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.field-selector-dropdown:hover {
+  border-color: #646cff;
+}
+
+.field-selector-dropdown:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.3);
 }
 
 /* Responsive Design */

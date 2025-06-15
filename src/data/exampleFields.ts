@@ -3,7 +3,7 @@ import { TradeField } from '../types';
 export const EXAMPLE_CALCULATED_FIELDS: TradeField[] = [
   {
     id: 'capitale_totale',
-    label: 'Capitale Totale',
+    label: 'Capitale Totale €',
     type: 'number',
     required: false,
     placeholder: 'Capitale totale disponibile',
@@ -11,8 +11,8 @@ export const EXAMPLE_CALCULATED_FIELDS: TradeField[] = [
     defaultValue: 10000
   },
   {
-    id: 'size',
-    label: 'Size (%)',
+    id: 'size_percentage',
+    label: 'Size %',
     type: 'number',
     required: false,
     placeholder: 'Percentuale del capitale da investire',
@@ -20,26 +20,26 @@ export const EXAMPLE_CALCULATED_FIELDS: TradeField[] = [
     defaultValue: 2
   },
   {
-    id: 'capitale_investito',
-    label: 'Capitale Investito',
-    type: 'calculated',
+    id: 'risk_level',
+    label: 'Livello Rischio',
+    type: 'select',
     required: false,
     enabled: true,
-    formula: '({capitale_totale} / 100) * {size}',
-    dependencies: ['capitale_totale', 'size']
+    options: ['Conservativo', 'Moderato', 'Aggressivo', 'Molto Aggressivo'],
+    defaultValue: 'Moderato'
   },
   {
-    id: 'risk_percentage',
-    label: 'Risk %',
+    id: 'capitale_investito',
+    label: 'Capitale Investito €',
     type: 'calculated',
     required: false,
     enabled: true,
-    formula: '({capitale_investito} / {capitale_totale}) * 100',
-    dependencies: ['capitale_investito', 'capitale_totale']
+    formula: '({capitale_totale} / 100) * {size_percentage}',
+    dependencies: ['capitale_totale', 'size_percentage']
   },
   {
     id: 'position_value',
-    label: 'Valore Posizione',
+    label: 'Valore Posizione €',
     type: 'calculated',
     required: false,
     enabled: true,
@@ -47,13 +47,13 @@ export const EXAMPLE_CALCULATED_FIELDS: TradeField[] = [
     dependencies: ['qty', 'entryPrice']
   },
   {
-    id: 'profit_percentage',
-    label: 'Profit %',
+    id: 'portfolio_weight',
+    label: 'Peso Portafoglio %',
     type: 'calculated',
     required: false,
     enabled: true,
-    formula: '{capitale_investito} > 0 ? ({pnl} / {capitale_investito}) * 100 : 0',
-    dependencies: ['pnl', 'capitale_investito']
+    formula: '{capitale_totale} > 0 ? ({position_value} / {capitale_totale}) * 100 : 0',
+    dependencies: ['position_value', 'capitale_totale']
   }
 ];
 
@@ -64,7 +64,8 @@ export const EXAMPLE_PORTFOLIO_FIELDS: TradeField[] = [
     type: 'select',
     required: false,
     enabled: true,
-    options: ['Tecnologia', 'Sanità', 'Finanziario', 'Energia', 'Consumo', 'Industriale', 'Materiali', 'Servizi', 'Immobiliare', 'Telecomunicazioni']
+    options: ['Tecnologia', 'Sanità', 'Finanziario', 'Energia', 'Consumo', 'Industriale', 'Materiali', 'Servizi', 'Immobiliare', 'Telecomunicazioni'],
+    defaultValue: 'Tecnologia'
   },
   {
     id: 'paese',
@@ -72,7 +73,8 @@ export const EXAMPLE_PORTFOLIO_FIELDS: TradeField[] = [
     type: 'select',
     required: false,
     enabled: true,
-    options: ['USA', 'Europa', 'Asia', 'Italia', 'Germania', 'Francia', 'Regno Unito', 'Giappone', 'Cina']
+    options: ['USA', 'Europa', 'Asia', 'Italia', 'Germania', 'Francia', 'Regno Unito', 'Giappone', 'Cina'],
+    defaultValue: 'USA'
   },
   {
     id: 'dividend_yield',
@@ -80,16 +82,25 @@ export const EXAMPLE_PORTFOLIO_FIELDS: TradeField[] = [
     type: 'number',
     required: false,
     placeholder: 'Rendimento dividendi annuo',
-    enabled: true
+    enabled: true,
+    defaultValue: 0
   },
   {
-    id: 'peso_portafoglio',
-    label: 'Peso Portafoglio %',
-    type: 'calculated',
+    id: 'market_cap',
+    label: 'Market Cap',
+    type: 'select',
     required: false,
     enabled: true,
-    formula: '({position_value} / {capitale_totale}) * 100',
-    dependencies: ['position_value', 'capitale_totale']
+    options: ['Micro Cap', 'Small Cap', 'Mid Cap', 'Large Cap', 'Mega Cap'],
+    defaultValue: 'Large Cap'
+  },
+  {
+    id: 'data_apertura',
+    label: 'Data Apertura Posizione',
+    type: 'date',
+    required: false,
+    enabled: true,
+    defaultValue: '2025-06-16'
   }
 ];
 
@@ -100,7 +111,8 @@ export const EXAMPLE_RISK_FIELDS: TradeField[] = [
     type: 'number',
     required: false,
     placeholder: 'Perdita massima accettabile',
-    enabled: true
+    enabled: true,
+    defaultValue: 500
   },
   {
     id: 'confidence_level',
@@ -108,7 +120,26 @@ export const EXAMPLE_RISK_FIELDS: TradeField[] = [
     type: 'select',
     required: false,
     enabled: true,
-    options: ['Molto Alto', 'Alto', 'Medio', 'Basso', 'Molto Basso']
+    options: ['Molto Alto', 'Alto', 'Medio', 'Basso', 'Molto Basso'],
+    defaultValue: 'Alto'
+  },
+  {
+    id: 'time_frame',
+    label: 'Time Frame',
+    type: 'select',
+    required: false,
+    enabled: true,
+    options: ['Scalping', 'Intraday', 'Swing', 'Position', 'Long Term'],
+    defaultValue: 'Swing'
+  },
+  {
+    id: 'note_trade',
+    label: 'Note Trade',
+    type: 'text',
+    required: false,
+    placeholder: 'Note aggiuntive sul trade',
+    enabled: true,
+    defaultValue: ''
   },
   {
     id: 'risk_reward_ratio',
@@ -118,15 +149,6 @@ export const EXAMPLE_RISK_FIELDS: TradeField[] = [
     enabled: true,
     formula: '{takeProfit} && {stopLoss} && {entryPrice} ? Math.abs({takeProfit} - {entryPrice}) / Math.abs({entryPrice} - {stopLoss}) : 0',
     dependencies: ['takeProfit', 'stopLoss', 'entryPrice']
-  },
-  {
-    id: 'kelly_percentage',
-    label: 'Kelly %',
-    type: 'calculated',
-    required: false,
-    enabled: true,
-    formula: '{risk_reward_ratio} > 0 ? (0.6 * {risk_reward_ratio} - 0.4) / {risk_reward_ratio} * 100 : 0',
-    dependencies: ['risk_reward_ratio']
   }
 ];
 

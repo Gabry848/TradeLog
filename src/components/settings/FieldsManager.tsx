@@ -364,9 +364,7 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     className="config-input"
                   />
                   <small>Testo di aiuto che appare nel campo vuoto</small>
-                </div>
-
-                <div className="form-group checkbox-group">
+                </div>                <div className="form-group checkbox-group">
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
@@ -376,7 +374,52 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     <span className="checkbox-text">Campo obbligatorio</span>
                   </label>
                 </div>
-              </div>              {newField.type === 'select' && (
+
+                <div className="form-group">
+                  <label htmlFor="field-default-value">Valore Predefinito</label>
+                  {newField.type === 'select' && newField.options ? (
+                    <select
+                      id="field-default-value"
+                      value={newField.defaultValue || ''}
+                      onChange={(e) => setNewField({ ...newField, defaultValue: e.target.value })}
+                      className="config-input"
+                    >
+                      <option value="">Nessun valore predefinito</option>
+                      {newField.options.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  ) : newField.type === 'number' ? (
+                    <input
+                      type="number"
+                      id="field-default-value"
+                      value={newField.defaultValue || ''}
+                      onChange={(e) => setNewField({ ...newField, defaultValue: parseFloat(e.target.value) || undefined })}
+                      placeholder="es: 100"
+                      className="config-input"
+                      step="0.01"
+                    />
+                  ) : newField.type === 'date' ? (
+                    <input
+                      type="date"
+                      id="field-default-value"
+                      value={newField.defaultValue || ''}
+                      onChange={(e) => setNewField({ ...newField, defaultValue: e.target.value })}
+                      className="config-input"
+                    />
+                  ) : newField.type !== 'calculated' ? (
+                    <input
+                      type="text"
+                      id="field-default-value"
+                      value={newField.defaultValue || ''}
+                      onChange={(e) => setNewField({ ...newField, defaultValue: e.target.value })}
+                      placeholder="es: Valore iniziale"
+                      className="config-input"
+                    />
+                  ) : null}
+                  <small>Valore utilizzato quando il campo è vuoto o per nuovi trade</small>
+                </div>
+              </div>{newField.type === 'select' && (
                 <OptionsInput
                   initialOptions={newField.options || []}
                   onChange={handleNewFieldOptionsChange}
@@ -470,9 +513,7 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     onChange={(e) => setEditingField({ ...editingField, placeholder: e.target.value })}
                     className="config-input"
                   />
-                </div>
-
-                <div className="form-group checkbox-group">
+                </div>                <div className="form-group checkbox-group">
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
@@ -486,7 +527,52 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                     <small>La proprietà "obbligatorio" dei campi sistema non può essere modificata</small>
                   )}
                 </div>
-              </div>              {editingField.type === 'select' && (
+
+                <div className="form-group">
+                  <label htmlFor="edit-field-default-value">Valore Predefinito</label>
+                  {editingField.type === 'select' && editingField.options ? (
+                    <select
+                      id="edit-field-default-value"
+                      value={editingField.defaultValue || ''}
+                      onChange={(e) => setEditingField({ ...editingField, defaultValue: e.target.value })}
+                      className="config-input"
+                    >
+                      <option value="">Nessun valore predefinito</option>
+                      {editingField.options.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  ) : editingField.type === 'number' ? (
+                    <input
+                      type="number"
+                      id="edit-field-default-value"
+                      value={editingField.defaultValue || ''}
+                      onChange={(e) => setEditingField({ ...editingField, defaultValue: parseFloat(e.target.value) || undefined })}
+                      placeholder="es: 100"
+                      className="config-input"
+                      step="0.01"
+                    />
+                  ) : editingField.type === 'date' ? (
+                    <input
+                      type="date"
+                      id="edit-field-default-value"
+                      value={editingField.defaultValue || ''}
+                      onChange={(e) => setEditingField({ ...editingField, defaultValue: e.target.value })}
+                      className="config-input"
+                    />
+                  ) : editingField.type !== 'calculated' ? (
+                    <input
+                      type="text"
+                      id="edit-field-default-value"
+                      value={editingField.defaultValue || ''}
+                      onChange={(e) => setEditingField({ ...editingField, defaultValue: e.target.value })}
+                      placeholder="es: Valore iniziale"
+                      className="config-input"
+                    />
+                  ) : null}
+                  <small>Valore utilizzato quando il campo è vuoto o per nuovi trade</small>
+                </div>
+              </div>{editingField.type === 'select' && (
                 <OptionsInput
                   initialOptions={editingField.options || []}
                   onChange={handleEditFieldOptionsChange}

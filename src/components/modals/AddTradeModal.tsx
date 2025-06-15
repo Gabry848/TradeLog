@@ -15,9 +15,19 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
   tradeFields,
   onClose,
   onSubmit,
-}) => {
-  const [formData, setFormData] = useState<Partial<Trade>>({});
+}) => {  const [formData, setFormData] = useState<Partial<Trade>>({});
   const [calculatedValues, setCalculatedValues] = useState<Record<string, number | string>>({});
+
+  // Inizializza i valori predefiniti
+  useEffect(() => {
+    const initialData: Partial<Trade> = {};
+    tradeFields.forEach(field => {
+      if (field.defaultValue !== undefined && field.enabled) {
+        (initialData as Record<string, unknown>)[field.id] = field.defaultValue;
+      }
+    });
+    setFormData(initialData);
+  }, [tradeFields]);
 
   // Aggiorna i valori calcolati quando i dati del form cambiano
   useEffect(() => {
@@ -127,12 +137,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                       disabled
                       className="calculated-field"
                       placeholder="Valore calcolato automaticamente"
-                    />
-                  ) : field.type === "select" ? (
-                    <select
+                    />                  ) : field.type === "select" ? (                    <select
                       id={field.id}
                       name={field.id}
                       required={field.required}
+                      value={String(formData[field.id as keyof Trade] || field.defaultValue || '')}
                       onChange={(e) => handleInputChange(field.id, e.target.value)}
                     >
                       <option value="">
@@ -144,13 +153,13 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                         </option>
                       ))}
                     </select>
-                  ) : (
-                    <input
+                  ) : (                    <input
                       type={field.type}
                       id={field.id}
                       name={field.id}
                       placeholder={field.placeholder}
                       required={field.required}
+                      value={String(formData[field.id as keyof Trade] || field.defaultValue || '')}
                       onChange={(e) => handleInputChange(field.id, e.target.value)}
                       {...(field.type === "number"
                         ? {

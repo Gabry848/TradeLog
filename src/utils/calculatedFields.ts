@@ -55,12 +55,11 @@ function getFieldValue(
   if (!field) {
     return null;
   }
-  
-  // Ottiene il valore dal trade
-  const value = trade[fieldId as keyof Trade];
+    // Ottiene il valore dal trade
+  let value = trade[fieldId as keyof Trade];
     // Se il campo ha un valore predefinito e il valore corrente è vuoto
   if ((value === null || value === undefined || value === '') && field.defaultValue !== undefined) {
-    return field.defaultValue;
+    value = field.defaultValue;
   }
     if (value === undefined) {
     return null;
@@ -189,23 +188,30 @@ export function validateFormula(formula: string, fields: TradeField[]): { valid:
   try {
     // Estrae le dipendenze
     const dependencies = extractDependencies(formula);
-    
-    // Verifica che tutti i campi referenziati esistano
+      // Verifica che tutti i campi referenziati esistano
     for (const depId of dependencies) {
       const field = fields.find(f => f.id === depId);
       if (!field) {
         return { valid: false, error: `Campo "${depId}" non trovato` };
       }
       
-      // Verifica che i campi referenziati siano numerici (per ora)
-      if (field.type !== 'number' && field.type !== 'calculated') {
-        return { valid: false, error: `Campo "${depId}" deve essere numerico` };
+      // I campi calcolati non possono dipendere da se stessi
+      if (field.type === 'calculated') {
+        return { valid: false, error: `Un campo calcolato non può dipendere da un altro campo calcolato "${depId}"` };
       }
     }
-    
-    // Testa la formula con valori fittizi
+      // Testa la formula con valori fittizi
     const testContext: CalculationContext = {
-      trade: Object.fromEntries(dependencies.map(dep => [dep, 100])),
+      trade: Object.fromEntries(dependencies.map(dep => {
+        const field = fields.find(f => f.id === dep);
+        let testValue: string | number = 100; // Default numerico
+        
+        if (field?.type === 'text') testValue = 'test';
+        else if (field?.type === 'date') testValue = '2025-01-01';
+        else if (field?.type === 'select' && field.options?.length) testValue = field.options[0];
+        
+        return [dep, testValue];
+      })),
       fields
     };
     

@@ -14,11 +14,9 @@ const CalculatedFieldEditor: React.FC<CalculatedFieldEditorProps> = ({
   availableFields
 }) => {
   const [formulaError, setFormulaError] = useState<string>('');
-  const [showPredefined, setShowPredefined] = useState(false);
-
-  // Campi disponibili per le dipendenze (solo numerici e calcolati)
-  const numericFields = availableFields.filter(f => 
-    f.type === 'number' || f.type === 'calculated'
+  const [showPredefined, setShowPredefined] = useState(false);  // Campi disponibili per le dipendenze (tutti i tipi tranne calculated)
+  const selectableFields = availableFields.filter(f => 
+    f.type !== 'calculated' && f.enabled
   );
   useEffect(() => {
     if (field.formula) {
@@ -79,8 +77,7 @@ const CalculatedFieldEditor: React.FC<CalculatedFieldEditorProps> = ({
       </div>
 
       <div className="form-group">
-        <label htmlFor="formula">Formula di Calcolo</label>
-        <div className="formula-editor">
+        <label htmlFor="formula">Formula di Calcolo</label>        <div className="formula-editor">
           <textarea
             id="formula"
             value={field.formula || ''}
@@ -98,19 +95,24 @@ const CalculatedFieldEditor: React.FC<CalculatedFieldEditorProps> = ({
               📐 Formule Predefinite
             </button>
             
-            <div className="field-references">
-              <span className="helper-label">Inserisci Campo:</span>
-              {numericFields.map(f => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => insertFieldReference(f.id)}
-                  className="field-ref-btn"
-                  title={f.label}
-                >
-                  {f.id}
-                </button>
-              ))}
+            <div className="field-selector">
+              <label className="helper-label">Inserisci Campo:</label>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    insertFieldReference(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="field-selector-dropdown"
+              >
+                <option value="">Seleziona un campo...</option>
+                {selectableFields.map(f => (
+                  <option key={f.id} value={f.id}>
+                    {f.label} ({f.id}) - {f.type}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
