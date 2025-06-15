@@ -1,0 +1,256 @@
+import { Trade, TradeField } from '../types';
+
+export interface CalculationContext {
+  trade: Partial<Trade>;
+  fields: TradeField[];
+  allTrades?: Trade[];
+}
+
+/**
+ * Valuta una formula per un campo calcolato
+ */
+export function evaluateFormula(
+  formula: string, 
+  context: CalculationContext
+): number | string | null {
+  try {
+    // Sostituisce i riferimenti ai campi con i loro valori
+    let processedFormula = formula;
+    
+    // Trova tutti i riferimenti ai campi nel formato {fieldId}
+    const fieldReferences = formula.match(/\{([^}]+)\}/g) || [];
+    
+    for (const ref of fieldReferences) {
+      const fieldId = ref.slice(1, -1); // Rimuove le parentesi graffe
+      const value = getFieldValue(fieldId, context);
+      
+      // Se il valore è null o undefined, restituisce null
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+      
+      // Sostituisce il riferimento con il valore
+      processedFormula = processedFormula.replace(ref, String(value));
+    }
+    
+    // Valuta l'espressione matematica
+    return evaluateExpression(processedFormula);
+  } catch (error) {
+    console.error('Errore nella valutazione della formula:', error);
+    return null;
+  }
+}
+
+/**
+ * Ottiene il valore di un campo dal contesto
+ */
+function getFieldValue(
+  fieldId: string, 
+  context: CalculationContext
+): number | string | null {
+  const { trade, fields } = context;
+  
+  // Cerca il campo nella definizione
+  const field = fields.find(f => f.id === fieldId);
+  if (!field) {
+    return null;
+  }
+  
+  // Ottiene il valore dal trade
+  const value = trade[fieldId as keyof Trade];
+    // Se il campo ha un valore predefinito e il valore corrente è vuoto
+  if ((value === null || value === undefined || value === '') && field.defaultValue !== undefined) {
+    return field.defaultValue;
+  }
+    if (value === undefined) {
+    return null;
+  }
+  
+  return typeof value === 'boolean' ? (value ? 1 : 0) : value;
+}
+
+/**
+ * Valuta un'espressione matematica in modo sicuro
+ */
+function evaluateExpression(expression: string): number {
+  // Lista delle funzioni matematiche consentite
+  const allowedFunctions = ['Math.round', 'Math.floor', 'Math.ceil', 'Math.abs', 'Math.min', 'Math.max'];
+  
+  // Verifica che l'espressione contenga solo caratteri sicuri
+  const sanitized = expression.replace(/[0-9+\-*/.() ]/g, '');
+  if (sanitized.length > 0) {
+    // Controlla se ci sono funzioni Math consentite
+    let hasAllowedFunctions = false;
+    for (const func of allowedFunctions) {
+      if (expression.includes(func)) {
+        hasAllowedFunctions = true;
+        break;
+      }
+    }
+    
+    if (!hasAllowedFunctions && sanitized.length > 0) {
+      throw new Error('Espressione non sicura');
+    }
+  }
+  
+  // Valuta l'espressione
+  return Function('"use strict"; return (' + expression + ')')();
+}
+
+/**
+ * Calcola tutti i campi calcolati per un trade
+ */
+export function calculateAllFields(
+  trade: Partial<Trade>, 
+  fields: TradeField[],
+  allTrades?: Trade[]
+): Partial<Trade> {
+  const result = { ...trade };
+  const context: CalculationContext = { trade: result, fields, allTrades };
+  
+  // Ordina i campi per dipendenze (i campi senza dipendenze vengono calcolati per primi)
+  const sortedFields = topologicalSort(fields);
+  
+  for (const field of sortedFields) {
+    if (field.type === 'calculated' && field.formula && field.enabled) {      const calculatedValue = evaluateFormula(field.formula, context);
+      if (calculatedValue !== null) {
+        (result as Record<string, unknown>)[field.id] = calculatedValue;
+        // Aggiorna il contesto per i calcoli successivi
+        context.trade = result;
+      }
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Ordinamento topologico dei campi in base alle dipendenze
+ */
+function topologicalSort(fields: TradeField[]): TradeField[] {
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+  const result: TradeField[] = [];
+  const fieldMap = new Map<string, TradeField>();
+  
+  // Crea una mappa per accesso rapido
+  fields.forEach(field => fieldMap.set(field.id, field));
+  
+  function visit(fieldId: string) {
+    if (visiting.has(fieldId)) {
+      throw new Error(`Dipendenza circolare rilevata nel campo: ${fieldId}`);
+    }
+    
+    if (visited.has(fieldId)) {
+      return;
+    }
+    
+    const field = fieldMap.get(fieldId);
+    if (!field) {
+      return;
+    }
+    
+    visiting.add(fieldId);
+    
+    // Visita prima le dipendenze
+    if (field.dependencies) {
+      for (const depId of field.dependencies) {
+        visit(depId);
+      }
+    }
+    
+    visiting.delete(fieldId);
+    visited.add(fieldId);
+    result.push(field);
+  }
+  
+  // Visita tutti i campi
+  for (const field of fields) {
+    if (!visited.has(field.id)) {
+      visit(field.id);
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Estrae le dipendenze da una formula
+ */
+export function extractDependencies(formula: string): string[] {
+  const fieldReferences = formula.match(/\{([^}]+)\}/g) || [];
+  return fieldReferences.map(ref => ref.slice(1, -1));
+}
+
+/**
+ * Valida una formula
+ */
+export function validateFormula(formula: string, fields: TradeField[]): { valid: boolean; error?: string } {
+  try {
+    // Estrae le dipendenze
+    const dependencies = extractDependencies(formula);
+    
+    // Verifica che tutti i campi referenziati esistano
+    for (const depId of dependencies) {
+      const field = fields.find(f => f.id === depId);
+      if (!field) {
+        return { valid: false, error: `Campo "${depId}" non trovato` };
+      }
+      
+      // Verifica che i campi referenziati siano numerici (per ora)
+      if (field.type !== 'number' && field.type !== 'calculated') {
+        return { valid: false, error: `Campo "${depId}" deve essere numerico` };
+      }
+    }
+    
+    // Testa la formula con valori fittizi
+    const testContext: CalculationContext = {
+      trade: Object.fromEntries(dependencies.map(dep => [dep, 100])),
+      fields
+    };
+    
+    const result = evaluateFormula(formula, testContext);
+    
+    if (typeof result !== 'number') {
+      return { valid: false, error: 'La formula deve restituire un valore numerico' };
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: (error as Error).message };
+  }
+}
+
+// Formule predefinite comuni
+export const PREDEFINED_FORMULAS = {
+  'capital_invested': {
+    name: 'Capitale Investito',
+    description: 'Calcola il capitale investito: (capitale_totale / 100) * size',
+    formula: '({capitale_totale} / 100) * {size}',
+    dependencies: ['capitale_totale', 'size']
+  },
+  'risk_percentage': {
+    name: 'Percentuale di Rischio',
+    description: 'Calcola la percentuale di rischio: (capitale_investito / capitale_totale) * 100',
+    formula: '({capitale_investito} / {capitale_totale}) * 100',
+    dependencies: ['capitale_investito', 'capitale_totale']
+  },
+  'position_value': {
+    name: 'Valore Posizione',
+    description: 'Calcola il valore della posizione: qty * entryPrice',
+    formula: '{qty} * {entryPrice}',
+    dependencies: ['qty', 'entryPrice']
+  },
+  'profit_percentage': {
+    name: 'Percentuale Profitto',
+    description: 'Calcola la percentuale di profitto: (pnl / capitale_investito) * 100',
+    formula: '({pnl} / {capitale_investito}) * 100',
+    dependencies: ['pnl', 'capitale_investito']
+  },
+  'risk_reward_ratio': {
+    name: 'Risk/Reward Ratio',
+    description: 'Calcola il rapporto rischio/rendimento',
+    formula: '{takeProfit} > 0 && {stopLoss} > 0 ? Math.abs({takeProfit} - {entryPrice}) / Math.abs({entryPrice} - {stopLoss}) : 0',
+    dependencies: ['takeProfit', 'stopLoss', 'entryPrice']
+  }
+};

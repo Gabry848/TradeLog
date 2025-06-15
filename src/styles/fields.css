@@ -307,6 +307,289 @@
   min-height: 80px;
 }
 
+/* Calculated Field Editor Styles */
+.calculated-field-editor {
+  background-color: #2a2d35;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border: 1px solid #646cff;
+}
+
+.formula-editor {
+  position: relative;
+}
+
+.formula-textarea {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formula-textarea.error {
+  border-color: #ef4444;
+}
+
+.formula-helpers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  align-items: center;
+}
+
+.helper-btn {
+  padding: 0.375rem 0.75rem;
+  background-color: #646cff;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.helper-btn:hover {
+  background-color: #535bf2;
+}
+
+.field-references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.helper-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-right: 0.5rem;
+}
+
+.field-ref-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  color: #e5e7eb;
+  font-size: 0.75rem;
+  font-family: monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.field-ref-btn:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+.formula-error {
+  background-color: #1f1214;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.formula-help {
+  margin-top: 0.5rem;
+}
+
+.formula-help small {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.predefined-formulas {
+  background-color: #1e2025;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid #3a3d45;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.predefined-formulas h4 {
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.predefined-formula {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: #2a2d35;
+  border-radius: 6px;
+  border: 1px solid #3a3d45;
+}
+
+.formula-info {
+  flex: 1;
+}
+
+.formula-info strong {
+  color: #ffffff;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.formula-info p {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.formula-info code {
+  background-color: #1e2025;
+  color: #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  border: 1px solid #374151;
+}
+
+.use-formula-btn {
+  padding: 0.5rem 1rem;
+  background-color: #10b981;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 1rem;
+}
+
+.use-formula-btn:hover {
+  background-color: #059669;
+}
+
+.dependencies-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #1e2025;
+  border-radius: 6px;
+  border: 1px solid #3a3d45;
+}
+
+.dependencies-info strong {
+  color: #ffffff;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.dependencies-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dependency-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.dependency-badge.valid {
+  background-color: #065f46;
+  color: #a7f3d0;
+  border: 1px solid #10b981;
+}
+
+.dependency-badge.invalid {
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+}
+
+/* Quick Add Fields Dropdown */
+.fields-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.quick-add-dropdown {
+  position: relative;
+}
+
+.quick-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #10b981;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-add-btn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.quick-add-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #1e2025;
+  border: 1px solid #3a3d45;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: none;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.quick-add-dropdown:hover .quick-add-menu {
+  display: block;
+}
+
+.quick-add-option {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #3a3d45;
+}
+
+.quick-add-option:last-child {
+  border-bottom: none;
+}
+
+.quick-add-option:hover {
+  background-color: #2a2d35;
+  color: #ffffff;
+}
+
+.quick-add-option:active {
+  background-color: #646cff;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .fields-manager {

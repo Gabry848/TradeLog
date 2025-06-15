@@ -68,11 +68,14 @@ export interface NewTradeData {
 export interface TradeField {
   id: string;
   label: string;
-  type: "text" | "number" | "date" | "select";
+  type: "text" | "number" | "date" | "select" | "calculated";
   required: boolean;
   placeholder?: string;
   options?: string[];
   enabled: boolean;
+  formula?: string; // Formula per campi calcolati
+  dependencies?: string[]; // ID dei campi da cui dipende
+  defaultValue?: string | number; // Valore predefinito
 }
 
 export interface ChartConfig {

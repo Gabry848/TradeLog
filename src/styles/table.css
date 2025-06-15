@@ -218,6 +218,29 @@
   font-weight: 600;
 }
 
+/* Calculated Fields in Table */
+.editable-cell.calculated {
+  background-color: rgba(100, 108, 255, 0.1);
+  border-left: 3px solid #646cff;
+  cursor: default !important;
+  font-style: italic;
+}
+
+.editable-cell.calculated:hover {
+  background-color: rgba(100, 108, 255, 0.15);
+}
+
+.calculated-indicator {
+  float: right;
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 5px;
+}
+
+.editable-cell.calculated .edit-hint {
+  display: none !important;
+}
+
 @keyframes error-shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-2px); }

@@ -1,5 +1,6 @@
-import React from 'react';
-import { TradeField, NewTradeData } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { TradeField, NewTradeData, Trade } from '../../types';
+import { calculateAllFields } from '../../utils/calculatedFields';
 import '../../styles/modal.css';
 
 interface AddTradeModalProps {
@@ -15,34 +16,68 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  if (!isOpen) return null;
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
+  const [formData, setFormData] = useState<Partial<Trade>>({});
+  const [calculatedValues, setCalculatedValues] = useState<Record<string, number | string>>({});
+
+  // Aggiorna i valori calcolati quando i dati del form cambiano
+  useEffect(() => {
+    const calculated = calculateAllFields(formData, tradeFields);    const calculatedFields = tradeFields
+      .filter(field => field.type === 'calculated')
+      .reduce((acc, field) => {
+        const value = calculated[field.id as keyof Trade];
+        if (value !== undefined && value !== null) {
+          acc[field.id] = typeof value === 'boolean' ? (value ? 1 : 0) : value;
+        }
+        return acc;
+      }, {} as Record<string, number | string>);
     
+    setCalculatedValues(calculatedFields);
+  }, [formData, tradeFields]);
+
+  const handleInputChange = (fieldId: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldId]: value === '' ? undefined : (
+        tradeFields.find(f => f.id === fieldId)?.type === 'number' 
+          ? parseFloat(value) || 0
+          : value
+      )
+    }));
+  };
+
+  if (!isOpen) return null;  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formDataObj = new FormData(form);
+    
+    // Crea l'oggetto trade con tutti i dati del form
     const tradeData: NewTradeData = {
-      symbol: formData.get("symbol") as string | null,
-      type: formData.get("type") as string | null,
-      qty: formData.get("qty") as string | null,
-      entryPrice: formData.get("entryPrice") as string | null,
-      exitPrice: formData.get("exitPrice") as string | null,
-      entryDate: formData.get("entryDate") as string | null,
-      exitDate: formData.get("exitDate") as string | null,      stopLoss: formData.get("stopLoss") as string | null,
-      takeProfit: formData.get("takeProfit") as string | null,
-      targetProfit: formData.get("targetProfit") as string | null,
-      maxLoss: formData.get("maxLoss") as string | null,
-      exitReason: formData.get("exitReason") as string | null,
-      strategy: formData.get("strategy") as string | null,
-      fees: formData.get("fees") as string | null,
-      status: formData.get("status") as string | null,
-      hitProfitTarget: formData.get("hitProfitTarget") as string | null,
-      actualEntryPrice: formData.get("actualEntryPrice") as string | null,
-      actualExitPrice: formData.get("actualExitPrice") as string | null,
+      symbol: formDataObj.get("symbol") as string | null,
+      type: formDataObj.get("type") as string | null,
+      qty: formDataObj.get("qty") as string | null,
+      entryPrice: formDataObj.get("entryPrice") as string | null,
+      exitPrice: formDataObj.get("exitPrice") as string | null,
+      entryDate: formDataObj.get("entryDate") as string | null,
+      exitDate: formDataObj.get("exitDate") as string | null,
+      stopLoss: formDataObj.get("stopLoss") as string | null,
+      takeProfit: formDataObj.get("takeProfit") as string | null,
+      targetProfit: formDataObj.get("targetProfit") as string | null,
+      maxLoss: formDataObj.get("maxLoss") as string | null,
+      exitReason: formDataObj.get("exitReason") as string | null,
+      strategy: formDataObj.get("strategy") as string | null,
+      fees: formDataObj.get("fees") as string | null,
+      status: formDataObj.get("status") as string | null,
+      hitProfitTarget: formDataObj.get("hitProfitTarget") as string | null,
+      actualEntryPrice: formDataObj.get("actualEntryPrice") as string | null,
+      actualExitPrice: formDataObj.get("actualExitPrice") as string | null,
       // Campi legacy per compatibilità
-      price: formData.get("price") as string | null,
-      date: formData.get("date") as string | null,
-      pnl: formData.get("pnl") as string | null,
-    };
+      price: formDataObj.get("price") as string | null,
+      date: formDataObj.get("date") as string | null,
+      pnl: formDataObj.get("pnl") as string | null,
+    };    // Aggiungi i valori calcolati
+    Object.entries(calculatedValues).forEach(([fieldId, value]) => {
+      (tradeData as unknown as Record<string, string | number | null>)[fieldId] = String(value);
+    });
     
     onSubmit(tradeData);
   };
@@ -79,12 +114,26 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                         {' '}(Inserire manualmente)
                       </span>
                     )}
+                    {field.type === 'calculated' && (
+                      <span style={{ fontSize: '12px', color: '#646cff', fontWeight: 'normal' }}>
+                        {' '}(Calcolato automaticamente)
+                      </span>
+                    )}
                   </label>
-                  {field.type === "select" ? (
+                  {field.type === 'calculated' ? (
+                    <input
+                      type="text"
+                      value={calculatedValues[field.id] || ''}
+                      disabled
+                      className="calculated-field"
+                      placeholder="Valore calcolato automaticamente"
+                    />
+                  ) : field.type === "select" ? (
                     <select
                       id={field.id}
                       name={field.id}
                       required={field.required}
+                      onChange={(e) => handleInputChange(field.id, e.target.value)}
                     >
                       <option value="">
                         Select {field.label.toLowerCase()}
@@ -95,12 +144,14 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                         </option>
                       ))}
                     </select>
-                  ) : (                    <input
+                  ) : (
+                    <input
                       type={field.type}
                       id={field.id}
                       name={field.id}
                       placeholder={field.placeholder}
                       required={field.required}
+                      onChange={(e) => handleInputChange(field.id, e.target.value)}
                       {...(field.type === "number"
                         ? {
                             step: field.id === "qty" ? "1" : "0.01",

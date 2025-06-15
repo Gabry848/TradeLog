@@ -56,46 +56,65 @@ const TradesTable: React.FC<TradesTableProps> = ({
         const value = trade[field.id] ?? (field.type === 'number' ? 0 : '');
         const isEditing = editingCell?.tradeId === trade.id && editingCell?.fieldId === field.id;
         const hasError = errorCell?.tradeId === trade.id && errorCell?.fieldId === field.id;
-        
-        const renderEditableCell = (content: React.ReactNode, fieldId: string) => (
-          <div 
-            key={field.id} 
-            className={`editable-cell ${isEditing ? 'editing' : ''} ${hasError ? 'error' : ''}`}
-            onClick={() => onCellClick(trade.id, fieldId)}
-          >
-            <div className="edit-hint">
-              {hasError ? errorCell?.message : (isEditing ? 'Click to edit' : '')}
-            </div>
-            {isEditing ? (
-              field.id === 'type' ? (
-                <select
-                  className="editable-select"
-                  value={String(value)}
-                  onChange={(e) => onCellChange(trade.id, fieldId, e.target.value)}
-                  onBlur={onCellBlur}
-                  onKeyDown={onCellKeyDown}
-                  autoFocus
-                >
-                  <option value="Buy">Buy</option>
-                  <option value="Sell">Sell</option>
-                </select>
+          const renderEditableCell = (content: React.ReactNode, fieldId: string) => {
+          const isCalculated = field.type === 'calculated';
+          
+          return (
+            <div 
+              key={field.id} 
+              className={`editable-cell ${isEditing ? 'editing' : ''} ${hasError ? 'error' : ''} ${isCalculated ? 'calculated' : ''}`}
+              onClick={() => !isCalculated && onCellClick(trade.id, fieldId)}
+              title={isCalculated ? 'Campo calcolato automaticamente' : ''}
+            >
+              <div className="edit-hint">
+                {hasError ? errorCell?.message : (isEditing ? 'Click to edit' : '')}
+                {isCalculated && <span className="calculated-indicator">🧮</span>}
+              </div>
+              {isEditing && !isCalculated ? (
+                field.id === 'type' ? (
+                  <select
+                    className="editable-select"
+                    value={String(value)}
+                    onChange={(e) => onCellChange(trade.id, fieldId, e.target.value)}
+                    onBlur={onCellBlur}
+                    onKeyDown={onCellKeyDown}
+                    autoFocus
+                  >
+                    <option value="Buy">Buy</option>
+                    <option value="Sell">Sell</option>
+                  </select>
+                ) : field.type === 'select' && field.options ? (
+                  <select
+                    className="editable-select"
+                    value={String(value)}
+                    onChange={(e) => onCellChange(trade.id, fieldId, e.target.value)}
+                    onBlur={onCellBlur}
+                    onKeyDown={onCellKeyDown}
+                    autoFocus
+                  >
+                    <option value="">Select...</option>
+                    {field.options.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                    className="editable-input"
+                    value={String(value)}
+                    onChange={(e) => onCellChange(trade.id, fieldId, e.target.value)}
+                    onBlur={onCellBlur}
+                    onKeyDown={onCellKeyDown}
+                    autoFocus
+                    step={field.type === 'number' ? '0.01' : undefined}
+                  />
+                )
               ) : (
-                <input
-                  type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-                  className="editable-input"
-                  value={String(value)}
-                  onChange={(e) => onCellChange(trade.id, fieldId, e.target.value)}
-                  onBlur={onCellBlur}
-                  onKeyDown={onCellKeyDown}
-                  autoFocus
-                  step={field.type === 'number' ? '0.01' : undefined}
-                />
-              )
-            ) : (
-              content
-            )}
-          </div>
-        );
+                content
+              )}
+            </div>
+          );
+        };
         
         switch (field.id) {
           case 'id':

@@ -31,6 +31,7 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { exportToCSV, importFromCSV, loadTradesFromFile, saveTradesDirectly } from "./utils/fileUtils";
 import { validateCellValue, determineExitReason, migrateLegacyTrades } from "./utils/tradeUtils";
 import { getDefaultChartScripts } from "./utils/chartScriptUtils";
+import { calculateAllFields } from "./utils/calculatedFields";
 
 // Default configurations
 import { defaultTradeFields } from "./data/defaults";
@@ -123,7 +124,8 @@ function App() {
       maxPnL: "",
     });
   };  const handleAddTrade = (tradeData: NewTradeData) => {
-    const newTrade: Trade = {
+    // Crea il trade base con i dati del form
+    let newTrade: Trade = {
       id: Date.now(),
       entryDate: tradeData.entryDate || new Date().toISOString().split("T")[0],
       exitDate: tradeData.exitDate || undefined,
@@ -150,6 +152,24 @@ function App() {
       price: tradeData.exitPrice ? parseFloat(tradeData.exitPrice) : parseFloat(tradeData.entryPrice || "0"),
     };
 
+    // Aggiungi i campi personalizzati dal form
+    Object.keys(tradeData).forEach(key => {
+      if (!Object.prototype.hasOwnProperty.call(newTrade, key)) {
+        const value = (tradeData as unknown as Record<string, string | null>)[key];
+        if (value !== null) {
+          const field = tradeFields.find(f => f.id === key);
+          if (field?.type === 'number') {
+            (newTrade as Record<string, unknown>)[key] = parseFloat(value) || 0;
+          } else {
+            (newTrade as Record<string, unknown>)[key] = value;
+          }
+        }
+      }
+    });
+
+    // Calcola i campi calcolati
+    newTrade = calculateAllFields(newTrade, tradeFields) as Trade;
+
     // Se il trade è chiuso, determina automaticamente il motivo di uscita se non specificato
     if (newTrade.status === "Closed" && !newTrade.exitReason && newTrade.exitPrice) {
       newTrade.exitReason = determineExitReason(
@@ -158,7 +178,9 @@ function App() {
         newTrade.stopLoss,
         newTrade.takeProfit
       );
-    }// Salva il trade direttamente nel file configurato
+    }
+
+    // Salva il trade direttamente nel file configurato
     setUserTrades((prevTrades: Trade[]) => [...prevTrades, newTrade]);
     setIsAddTradeModalOpen(false);
 
@@ -202,9 +224,14 @@ function App() {
     if (fieldId !== 'id') {
       setEditingCell({ tradeId, fieldId });
     }
-  };
-  const handleCellChange = (tradeId: number, fieldId: string, newValue: string) => {
+  };  const handleCellChange = (tradeId: number, fieldId: string, newValue: string) => {
     const field = tradeFields.find(f => f.id === fieldId);
+    
+    // Impedisci la modifica di campi calcolati
+    if (field?.type === 'calculated') {
+      return;
+    }
+    
     const validationError = validateCellValue(fieldId, newValue, field?.type || 'text');
     
     if (validationError) {
@@ -224,14 +251,19 @@ function App() {
             processedValue = parseFloat(newValue) || 0;
           }
           
-          return { ...trade, [fieldId]: processedValue } as Trade;
+          let updatedTrade = { ...trade, [fieldId]: processedValue } as Trade;
+          
+          // Ricalcola i campi calcolati se necessario
+          updatedTrade = calculateAllFields(updatedTrade, tradeFields) as Trade;
+          
+          return updatedTrade;
         }        return trade;
       });
       
       // Il salvataggio automatico avviene tramite useEffect
       return updatedTrades;
     });
-  };  const handleCellBlur = () => {
+  };const handleCellBlur = () => {
     setEditingCell(null);
     // Il salvataggio automatico avviene tramite useEffect
   };

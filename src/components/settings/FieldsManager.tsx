@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { TradeField } from '../../types';
+import CalculatedFieldEditor from './CalculatedFieldEditor';
+import { addExampleFields } from '../../data/exampleFields';
 
 interface FieldsManagerProps {
   tradeFields: TradeField[];
@@ -36,22 +38,24 @@ const OptionsInput: React.FC<{
 
 const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpdate }) => {
   const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false);
-  const [editingField, setEditingField] = useState<TradeField | null>(null);
-  const [newField, setNewField] = useState<Partial<TradeField>>({
+  const [editingField, setEditingField] = useState<TradeField | null>(null);  const [newField, setNewField] = useState<Partial<TradeField>>({
     id: '',
     label: '',
     type: 'text',
     required: false,
     placeholder: '',
     enabled: true,
-    options: []
+    options: [],
+    formula: '',
+    dependencies: [],
+    defaultValue: undefined
   });
-
   const fieldTypes = [
     { value: 'text', label: '📝 Testo' },
     { value: 'number', label: '🔢 Numero' },
     { value: 'date', label: '📅 Data' },
-    { value: 'select', label: '📋 Selezione' }
+    { value: 'select', label: '📋 Selezione' },
+    { value: 'calculated', label: '🧮 Calcolato' }
   ];
 
   const coreFields = ['id', 'date', 'symbol', 'type', 'qty', 'price', 'pnl', 'fees', 'strategy'];
@@ -66,28 +70,31 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
     if (tradeFields.some(field => field.id === newField.id)) {
       alert('Un campo con questo ID esiste già');
       return;
-    }
-
-    const fieldToAdd: TradeField = {
+    }    const fieldToAdd: TradeField = {
       id: newField.id!,
       label: newField.label!,
       type: newField.type as TradeField['type'] || 'text',
       required: newField.required || false,
       placeholder: newField.placeholder || '',
       enabled: true,
-      options: newField.type === 'select' ? newField.options : undefined
+      options: newField.type === 'select' ? newField.options : undefined,
+      formula: newField.type === 'calculated' ? newField.formula : undefined,
+      dependencies: newField.type === 'calculated' ? newField.dependencies : undefined,
+      defaultValue: newField.defaultValue
     };
 
     const updatedFields = [...tradeFields, fieldToAdd];
-    onFieldsUpdate(updatedFields);
-    setNewField({
+    onFieldsUpdate(updatedFields);    setNewField({
       id: '',
       label: '',
       type: 'text',
       required: false,
       placeholder: '',
       enabled: true,
-      options: []
+      options: [],
+      formula: '',
+      dependencies: [],
+      defaultValue: undefined
     });
     setIsAddFieldModalOpen(false);
   };
@@ -138,25 +145,65 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
   const handleNewFieldOptionsChange = React.useCallback((options: string[]) => {
     handleOptionsChange(options, false);
   }, [handleOptionsChange]);
-
   const handleEditFieldOptionsChange = React.useCallback((options: string[]) => {
     handleOptionsChange(options, true);
   }, [handleOptionsChange]);
 
+  const handleEditingFieldChange = React.useCallback((field: Partial<TradeField>) => {
+    if (editingField) {
+      setEditingField({ ...editingField, ...field });
+    }
+  }, [editingField]);
+
   return (
-    <div className="fields-manager">
-      <div className="fields-header">
+    <div className="fields-manager">      <div className="fields-header">
         <h3>🔧 Gestione Campi Operazioni</h3>
-        <button
-          onClick={() => setIsAddFieldModalOpen(true)}
-          className="add-field-btn"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Aggiungi Campo
-        </button>
+        <div className="fields-actions">
+          <div className="quick-add-dropdown">
+            <button className="quick-add-btn">
+              ⚡ Aggiungi Rapidi
+            </button>
+            <div className="quick-add-menu">
+              <button
+                onClick={() => {
+                  const updatedFields = addExampleFields(tradeFields, 'calculated');
+                  onFieldsUpdate(updatedFields);
+                }}
+                className="quick-add-option"
+              >
+                🧮 Campi Calcolati Base
+              </button>
+              <button
+                onClick={() => {
+                  const updatedFields = addExampleFields(tradeFields, 'portfolio');
+                  onFieldsUpdate(updatedFields);
+                }}
+                className="quick-add-option"
+              >
+                📊 Analisi Portafoglio
+              </button>
+              <button
+                onClick={() => {
+                  const updatedFields = addExampleFields(tradeFields, 'risk');
+                  onFieldsUpdate(updatedFields);
+                }}
+                className="quick-add-option"
+              >
+                ⚠️ Gestione Rischio
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsAddFieldModalOpen(true)}
+            className="add-field-btn"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Aggiungi Campo
+          </button>
+        </div>
       </div>
 
       <div className="fields-description">
@@ -183,9 +230,7 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                   <span className="core-badge">Sistema</span>
                 )}
               </div>
-            </div>
-
-            <div className="field-card-details">
+            </div>            <div className="field-card-details">
               {field.placeholder && (
                 <div className="field-detail">
                   <strong>Placeholder:</strong> {field.placeholder}
@@ -194,6 +239,21 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
               {field.options && field.options.length > 0 && (
                 <div className="field-detail">
                   <strong>Opzioni:</strong> {field.options.join(', ')}
+                </div>
+              )}
+              {field.type === 'calculated' && field.formula && (
+                <div className="field-detail">
+                  <strong>Formula:</strong> <code>{field.formula}</code>
+                </div>
+              )}
+              {field.type === 'calculated' && field.dependencies && field.dependencies.length > 0 && (
+                <div className="field-detail">
+                  <strong>Dipende da:</strong> {field.dependencies.join(', ')}
+                </div>
+              )}
+              {field.defaultValue !== undefined && (
+                <div className="field-detail">
+                  <strong>Valore predefinito:</strong> {field.defaultValue}
                 </div>
               )}
             </div>
@@ -323,6 +383,14 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                 />
               )}
 
+              {newField.type === 'calculated' && (
+                <CalculatedFieldEditor
+                  field={newField}
+                  onFieldChange={setNewField}
+                  availableFields={tradeFields}
+                />
+              )}
+
               <div className="form-actions">
                 <button type="button" onClick={() => setIsAddFieldModalOpen(false)} className="cancel-btn">
                   Annulla
@@ -422,6 +490,12 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                 <OptionsInput
                   initialOptions={editingField.options || []}
                   onChange={handleEditFieldOptionsChange}
+                />
+              )}              {editingField.type === 'calculated' && (
+                <CalculatedFieldEditor
+                  field={editingField}
+                  onFieldChange={handleEditingFieldChange}
+                  availableFields={tradeFields}
                 />
               )}
 
