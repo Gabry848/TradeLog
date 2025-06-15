@@ -41,6 +41,11 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
   const [editingField, setEditingField] = useState<TradeField | null>(null);
   const [showQuickAddMenu, setShowQuickAddMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; fieldId: string; fieldLabel: string }>({
+    isOpen: false,
+    fieldId: '',
+    fieldLabel: ''
+  });
   const quickAddRef = useRef<HTMLDivElement>(null);
 
   // Chiude il menu quando si clicca fuori
@@ -144,17 +149,30 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
     onFieldsUpdate(updatedFields);
     setEditingField(null);
   };
-
   const handleDeleteField = (fieldId: string) => {
     if (coreFields.includes(fieldId)) {
       alert('Non puoi eliminare i campi essenziali del sistema');
       return;
     }
 
-    if (confirm(`Sei sicuro di voler eliminare il campo "${fieldId}"?`)) {
-      const updatedFields = tradeFields.filter(field => field.id !== fieldId);
-      onFieldsUpdate(updatedFields);
+    const field = tradeFields.find(f => f.id === fieldId);
+    if (field) {
+      setDeleteConfirmModal({
+        isOpen: true,
+        fieldId: fieldId,
+        fieldLabel: field.label
+      });
     }
+  };
+
+  const confirmDeleteField = () => {
+    const updatedFields = tradeFields.filter(field => field.id !== deleteConfirmModal.fieldId);
+    onFieldsUpdate(updatedFields);
+    setDeleteConfirmModal({ isOpen: false, fieldId: '', fieldLabel: '' });
+  };
+
+  const cancelDeleteField = () => {
+    setDeleteConfirmModal({ isOpen: false, fieldId: '', fieldLabel: '' });
   };
 
   const handleToggleField = (fieldId: string) => {
@@ -670,8 +688,66 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                 <button type="submit" className="submit-btn">
                   Salva Modifiche
                 </button>
+              </div>            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Eliminazione */}
+      {deleteConfirmModal.isOpen && (
+        <div className="modal-overlay" onClick={cancelDeleteField}>
+          <div className="modal-content delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>🗑️ Elimina Campo</h3>
+              <button onClick={cancelDeleteField} className="modal-close-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="delete-warning">
+                <div className="warning-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                  </svg>
+                </div>
+                <div className="warning-content">
+                  <h4>Sei sicuro di voler eliminare questo campo?</h4>
+                  <p>
+                    <strong>Campo:</strong> {deleteConfirmModal.fieldLabel} 
+                    <span className="field-id">({deleteConfirmModal.fieldId})</span>
+                  </p>
+                  <div className="warning-message">
+                    <p>⚠️ <strong>Attenzione:</strong> Questa azione eliminerà permanentemente:</p>
+                    <ul>
+                      <li>Il campo dalla configurazione</li>
+                      <li>Tutti i dati associati nelle operazioni esistenti</li>
+                      <li>Eventuali formule che dipendono da questo campo</li>
+                    </ul>
+                    <p className="irreversible">❌ <strong>Questa operazione non può essere annullata!</strong></p>
+                  </div>
+                </div>
               </div>
-            </form>
+            </div>
+
+            <div className="modal-actions">
+              <button onClick={cancelDeleteField} className="modal-btn secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+                Annulla
+              </button>
+              <button onClick={confirmDeleteField} className="modal-btn danger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3,6 5,6 21,6"/>
+                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                </svg>
+                Elimina Definitivamente
+              </button>
+            </div>
           </div>
         </div>
       )}

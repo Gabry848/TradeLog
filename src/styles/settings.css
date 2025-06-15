@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
   width: 100%;
@@ -265,45 +265,60 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1500px) {
+  .settings-page {
+    max-width: 1200px;
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .settings-page {
+    max-width: 1000px;
+    padding: 2rem 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .settings-page {
+    max-width: 100%;
     padding: 1rem;
-  }
-  
-  .file-config-grid {
-    grid-template-columns: 1fr;
     gap: 1.5rem;
   }
   
-  .defaults-grid {
+  .settings-section {
+    padding: 1.5rem;
+  }
+}
+
+/* Miglioramenti per il layout allargato */
+.settings-section.fields-section {
+  padding: 2.5rem;
+}
+
+.settings-section.fields-section h3 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Layout a 2 colonne per sezioni nella pagina allargata */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.settings-grid .settings-section {
+  margin: 0;
+}
+
+.settings-grid .settings-section.full-width {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1000px) {
+  .settings-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .fields-preview {
-    grid-template-columns: 1fr;
-  }
-  
-  .destination-input-group {
-    flex-direction: column;
-  }
-  
-  .destination-input-group .config-input {
-    margin-bottom: 0.5rem;
-  }
-  
-  .field-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .info-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-  
-  .info-row strong {
-    min-width: auto;
+    gap: 1.5rem;
   }
 }

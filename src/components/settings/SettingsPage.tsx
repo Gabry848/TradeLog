@@ -164,13 +164,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="info-note">
           <strong>ℹ️ Nota:</strong> La configurazione avanzata dei campi è disponibile qui sotto.
         </div>
+      </div>      {/* Fields Manager Component */}
+      <div className="settings-section fields-section full-width">
+        <FieldsManager
+          tradeFields={tradeFields}
+          onFieldsUpdate={onTradeFieldsUpdate}
+        />
       </div>
-
-      {/* Fields Manager Component */}
-      <FieldsManager
-        tradeFields={tradeFields}
-        onFieldsUpdate={onTradeFieldsUpdate}
-      />
     </div>
   );
 };

@@ -363,6 +363,104 @@
   min-width: 140px;
 }
 
+/* Delete Confirmation Modal */
+.delete-confirm-modal {
+  max-width: 600px;
+}
+
+.delete-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.warning-icon {
+  flex-shrink: 0;
+  color: #f59e0b;
+  margin-top: 0.25rem;
+}
+
+.warning-content h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.warning-content p {
+  margin: 0 0 1rem 0;
+  color: #d1d5db;
+  line-height: 1.5;
+}
+
+.warning-content .field-id {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  background-color: #2a2d35;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+.warning-message {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+}
+
+.warning-message p {
+  margin: 0 0 1rem 0;
+  color: #fca5a5;
+  font-weight: 600;
+}
+
+.warning-message ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  color: #fca5a5;
+}
+
+.warning-message li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.warning-message .irreversible {
+  margin: 1.5rem 0 0 0;
+  padding: 1rem;
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 6px;
+  color: #ef4444;
+  font-weight: 700;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 2rem;
+  border-top: 1px solid #3a3d45;
+  margin-top: 0;
+}
+
+.modal-actions .modal-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  justify-content: center;
+}
+
 /* Responsive per form più piccoli */
 @media (max-width: 1200px) {
   .field-modal .form-grid {
