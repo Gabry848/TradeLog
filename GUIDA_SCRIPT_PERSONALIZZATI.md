@@ -1,3 +1,4 @@
+<!-- filepath: e:\Projects\TradeLog\GUIDA_SCRIPT_PERSONALIZZATI.md -->
 # Guida alla Creazione di Script Personalizzati per Grafici
 
 ## Panoramica
@@ -63,7 +64,7 @@ Nel tuo script hai accesso a:
 
 #### `trades`
 
-Array di tutti i trade con le seguenti proprietà:
+Array di tutti i trade con le seguenti proprietà. **Nota**: Queste proprietà corrispondono esattamente ai campi che vedi nella tabella principale dei trade nell'applicazione:
 
 - `id`: ID univoco del trade
 - `entryDate`: Data di entrata
@@ -77,6 +78,8 @@ Array di tutti i trade con le seguenti proprietà:
 - `fees`: Commissioni
 - `strategy`: Strategia utilizzata
 - `status`: Stato del trade ("Open" o "Closed")
+
+**Importante**: Tutti i campi visibili nella tabella dei trade sono accessibili negli script. Se aggiungi nuovi campi alla tabella, saranno automaticamente disponibili anche negli script personalizzati.
 
 #### `parameters`
 

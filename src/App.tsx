@@ -49,7 +49,7 @@ function App() {
   const [filePath, setFilePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
   const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
 
-  // Filters and editing state
+  // Filters and editing stated
   const [filters, setFilters] = useState<FilterState>({
     symbol: "",
     type: "",
