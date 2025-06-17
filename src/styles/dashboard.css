@@ -235,3 +235,223 @@
     height: 35px;
   }
 }
+
+/* Win Rate Card Styles */
+.win-rate-card {
+  background-color: #1e2025;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3a3d45;
+  position: relative;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.win-rate-card:hover {
+  border-color: #4f5355;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.win-rate-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.win-rate-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.win-rate-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+.win-rate-value.positive {
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.win-rate-value.neutral {
+  color: #f59e0b;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.win-rate-value.negative {
+  color: #ef4444;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.win-rate-chart {
+  height: 80px;
+  width: 300px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+  border-radius: 8px;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.win-rate-details {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.detail-value.positive {
+  color: #10b981;
+}
+
+.detail-value.negative {
+  color: #ef4444;
+}
+
+.detail-value.neutral {
+  color: #f59e0b;
+}
+
+.win-rate-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.stat-value.positive {
+  color: #10b981;
+}
+
+.stat-value.negative {
+  color: #ef4444;
+}
+
+.stat-value.neutral {
+  color: #9ca3af;
+}
+
+.profit-factor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 1rem;
+}
+
+.profit-factor-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.profit-factor-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.profit-factor-value.positive {
+  color: #10b981;
+}
+
+.profit-factor-value.negative {
+  color: #ef4444;
+}
+
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  color: #9ca3af;
+}
+
+.no-data p {
+  margin: 0;
+  font-style: italic;
+}
+
+/* Responsive styles for Win Rate Card */
+@media (max-width: 768px) {
+  .win-rate-card {
+    padding: 1rem;
+    min-height: auto;
+  }
+  
+  .win-rate-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .win-rate-value {
+    font-size: 2rem;
+  }
+    .win-rate-chart {
+    width: 100%;
+    height: 70px;
+  }
+}

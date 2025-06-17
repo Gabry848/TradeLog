@@ -1,7 +1,8 @@
 import React from 'react';
 import { Trade } from '../../types';
-import { calculateTotalPnL, calculateWinRate } from '../../utils/chartUtils';
+import { calculateTotalPnL } from '../../utils/chartUtils';
 import MetricCard from './MetricCard';
+import WinRateCard from './WinRateCard';
 import EquityChart from './EquityChart';
 import RecentTradesTable from './RecentTradesTable';
 
@@ -11,13 +12,12 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ trades }) => {
   const totalPnL = calculateTotalPnL(trades);
-  const winRate = calculateWinRate(trades);
 
   return (
     <>      {/* Metrics Cards */}
       <div className="metrics-grid">
         <MetricCard title="Total P&L" value={totalPnL} />
-        <MetricCard title="Win Rate" value={winRate} isPercentage showChart />
+        <WinRateCard trades={trades} />
       </div>
 
       {/* Equity Curve */}
