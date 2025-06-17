@@ -41,6 +41,7 @@ interface AIChatProps {
   onScriptUpdated?: (scriptId: string, updatedScript: CustomChartScript) => void;
   trades: Trade[];
   existingScripts: CustomChartScript[];
+  currentScript?: CustomChartScript | null; // Script attualmente aperto nell'editor
 }
 
 const AIChat: React.FC<AIChatProps> = ({ 
@@ -48,8 +49,9 @@ const AIChat: React.FC<AIChatProps> = ({
   onToggle,   onScriptGenerated, 
   onScriptUpdated,
   trades, 
-  existingScripts 
-}) => {  const [messages, setMessages] = useState<AIMessage[]>([]);
+  existingScripts,
+  currentScript
+}) => {const [messages, setMessages] = useState<AIMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState(aiService.getApiKey());
@@ -270,7 +272,6 @@ ${script.parameters.length > 0 ?
     
     setMessages(prev => [...prev, selectionMessage]);
   };
-
   // Funzione per cambiare modalità di lavoro
   const handleModeChange = (newMode: 'create' | 'modify' | 'explain') => {
     setEditMode(newMode);
@@ -282,7 +283,21 @@ ${script.parameters.length > 0 ?
 
 Descrivi il grafico che vuoi creare e genererò un nuovo script per te!`;
     } else if (newMode === 'modify') {
-      modeMessage = `🔧 **Modalità Modifica attivata**
+      // Se c'è un currentScript, usalo automaticamente
+      if (currentScript) {
+        setSelectedScript(currentScript);
+        modeMessage = `🔧 **Modalità Modifica attivata per "${currentScript.name}"**
+
+**Tipo:** ${currentScript.chartType.toUpperCase()}
+**Descrizione:** ${currentScript.description}
+
+Dimmi come vuoi modificarlo! Esempi:
+• "Aggiungi una media mobile"
+• "Cambia i colori del grafico"  
+• "Aggiungi un filtro per data"
+• "Modifica la legenda"`;
+      } else {
+        modeMessage = `🔧 **Modalità Modifica attivata**
 
 Seleziona uno script esistente per modificarlo. Posso:
 • Aggiungere nuove funzionalità
@@ -290,25 +305,49 @@ Seleziona uno script esistente per modificarlo. Posso:
 • Cambiare il tipo di grafico
 • Ottimizzare le performance
 • Aggiungere parametri configurabili`;
-      
-      if (existingScripts.length === 0) {
-        modeMessage += '\n\n⚠️ **Nessuno script disponibile per la modifica.** Crea prima alcuni script!';
-      } else {
-        setShowScriptSelector(true);
+        
+        if (existingScripts.length === 0) {
+          modeMessage += '\n\n⚠️ **Nessuno script disponibile per la modifica.** Crea prima alcuni script!';
+        } else {
+          setShowScriptSelector(true);
+        }
       }
     } else if (newMode === 'explain') {
-      modeMessage = `📖 **Modalità Spiegazione attivata**
+      // Se c'è un currentScript, usalo automaticamente
+      if (currentScript) {
+        setSelectedScript(currentScript);
+        modeMessage = `📖 **Spiegazione dello script:** "${currentScript.name}"
+
+**Tipo di grafico:** ${currentScript.chartType.toUpperCase()}
+**Descrizione:** ${currentScript.description}
+
+🔍 **Analisi del codice:**
+
+**Cosa fa questo script:**
+Questo script genera un grafico ${currentScript.chartType} che ${currentScript.description.toLowerCase()}
+
+**Funzionalità principali:**
+${currentScript.parameters.length > 0 ? 
+  `• **Parametri configurabili:** ${currentScript.parameters.map(p => p.name).join(', ')}` : 
+  '• Nessun parametro configurabile'}
+• **Elaborazione dati:** Analizza ${currentScript.code.includes('trades.filter') ? 'con filtri sui trade' : 'tutti i trade disponibili'}
+• **Visualizzazione:** ${currentScript.code.includes('Chart.js') ? 'Utilizza Chart.js per il rendering' : 'Rendering personalizzato'}
+
+**💡 Vuoi che analizzi una parte specifica del codice o che spieghi come modificarlo?**`;
+      } else {
+        modeMessage = `📖 **Modalità Spiegazione attivata**
 
 Seleziona uno script per ricevere una spiegazione dettagliata del suo funzionamento, incluso:
 • Come funziona il codice
 • Cosa fanno i parametri
 • Come modificarlo
 • Suggerimenti per miglioramenti`;
-      
-      if (existingScripts.length === 0) {
-        modeMessage += '\n\n⚠️ **Nessuno script disponibile per la spiegazione.** Crea prima alcuni script!';
-      } else {
-        setShowScriptSelector(true);
+        
+        if (existingScripts.length === 0) {
+          modeMessage += '\n\n⚠️ **Nessuno script disponibile per la spiegazione.** Crea prima alcuni script!';
+        } else {
+          setShowScriptSelector(true);
+        }
       }
     }
 
@@ -379,21 +418,14 @@ Seleziona uno script per ricevere una spiegazione dettagliata del suo funzioname
       }}
       data-resizing={isResizing}
     >
-      {/* Modalità di lavoro */}
-      <div className="ai-chat-modes">
-        <button
-          className={editMode === 'create' ? 'active' : ''}
-          onClick={() => handleModeChange('create')}
-        >🆕 Crea</button>
-        <button
-          className={editMode === 'modify' ? 'active' : ''}
-          onClick={() => handleModeChange('modify')}
-        >🔧 Modifica</button>
-        <button
-          className={editMode === 'explain' ? 'active' : ''}
-          onClick={() => handleModeChange('explain')}
-        >📖 Spiega</button>
+      {/* Barra intestazione senza selezione modalità */}
+      <div className="ai-chat-header-bar">
+        {/* <span className="ai-chat-title">Assistant IA</span> */}
+        <div className="ai-chat-header-icons">
+          {/* ...altre icone come chiudi/minimizza se presenti... */}
+        </div>
       </div>
+
       {/* Selettore script se necessario */}
       {showScriptSelector && (
         <div className="ai-script-selector">
@@ -479,6 +511,16 @@ Seleziona uno script per ricevere una spiegazione dettagliata del suo funzioname
             >
               Salva
             </button>
+            <select
+              value={editMode}
+              onChange={e => setEditMode(e.target.value as 'create' | 'modify' | 'explain')}
+              className="ai-mode-select-in-settings"
+              style={{ marginLeft: '1rem', minWidth: 120 }}
+            >
+              <option value="create">🆕 Crea</option>
+              <option value="modify">🔧 Modifica</option>
+              <option value="explain">📖 Spiega</option>
+            </select>
           </div>
           <p className="api-key-help">
             Ottieni la tua API Key su{' '}

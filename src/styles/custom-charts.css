@@ -577,33 +577,204 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background-color: #1e2025;
+  border-radius: 8px;
+  border: 1px solid #3a3d45;
 }
 
 .parameters-header h4 {
   margin: 0;
   color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-small:not(.btn-danger) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-small:not(.btn-danger):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 
 .parameter-editor {
   background-color: #2a2d35;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
   border: 1px solid #3a3d45;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.parameter-editor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.parameter-editor:hover {
+  border-color: #646cff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.1);
+}
+
+.parameter-editor:hover::before {
+  opacity: 1;
+}
+
+.parameter-editor.has-error {
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.parameter-editor.has-error::before {
+  background: #ef4444;
+  opacity: 1;
 }
 
 .parameter-fields {
   display: grid;
-  grid-template-columns: 1fr 110px 110px auto auto;
-  gap: 8px;
+  grid-template-columns: 1fr 120px 120px auto auto;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.parameter-fields input,
+.parameter-fields select {
+  padding: 8px 12px;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  background-color: #1e2025;
+  color: #ffffff;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.parameter-fields input:focus,
+.parameter-fields select:focus {
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+  background-color: #23263a;
+}
+
+.parameter-fields input.error,
+.parameter-fields select.error {
+  border-color: #ef4444;
+  animation: error-shake 0.5s ease-in-out;
+}
+
+.parameter-fields input::placeholder {
+  color: #6b7280;
+}
+
+.parameter-fields label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.parameter-fields label:hover {
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.parameter-fields input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: #646cff;
 }
 
 .parameter-description {
   grid-column: 1 / -1;
   margin-top: 8px !important;
+  padding: 8px 12px;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  background-color: #1e2025;
+  color: #ffffff;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.parameter-description:focus {
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+  background-color: #23263a;
+}
+
+.parameter-description::placeholder {
+  color: #6b7280;
+}
+
+.parameter-validation-error {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 6px 10px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.parameter-validation-error::before {
+  content: '⚠️';
+  font-size: 14px;
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 /* Code Editor */
@@ -919,4 +1090,164 @@
   .chart-display .custom-chart-container {
     padding: 15px;
   }
+}
+
+/* Stili per messaggi di aiuto e suggerimenti */
+.parameter-help {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background-color: rgba(100, 108, 255, 0.1);
+  border: 1px solid rgba(100, 108, 255, 0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.parameter-help strong {
+  color: #646cff;
+}
+
+/* Miglioramenti ai placeholder */
+.parameter-fields input::placeholder,
+.parameter-description::placeholder {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Stili per input focus migliorati */
+.parameter-fields input:focus::placeholder,
+.parameter-description:focus::placeholder {
+  opacity: 0.7;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Stili per i tipi di parametro */
+.parameter-type-indicator {
+  position: absolute;
+  top: -6px;
+  left: 8px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.parameter-editor:hover .parameter-type-indicator {
+  opacity: 1;
+}
+
+/* Animazioni per la rimozione */
+.parameter-editor.removing {
+  animation: parameter-remove 0.3s ease-out forwards;
+}
+
+@keyframes parameter-remove {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 200px;
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-20px);
+    max-height: 0;
+    margin-bottom: 0;
+    padding: 0;
+  }
+}
+
+/* Stili per parametri vuoti o appena creati */
+.parameter-editor.new-parameter {
+  animation: parameter-add 0.3s ease-out forwards;
+  border-color: #22c55e;
+}
+
+.parameter-editor.new-parameter::before {
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+  opacity: 1;
+}
+
+@keyframes parameter-add {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 200px;
+  }
+}
+
+/* Responsive per schermi più piccoli */
+@media (max-width: 768px) {
+  .parameter-fields {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .parameter-fields > * {
+    width: 100%;
+  }
+  
+  .parameter-description {
+    margin-top: 4px !important;
+  }
+}
+
+/* Stili specifici per parametri boolean */
+.parameter-fields select.boolean-select {
+  background-color: #1e2025;
+  color: #ffffff;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.parameter-fields select.boolean-select:focus {
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+  background-color: #23263a;
+}
+
+.parameter-fields select.boolean-select option {
+  background-color: #1e2025;
+  color: #ffffff;
+}
+
+/* Indicatori visivi per i tipi */
+.parameter-type-indicator.type-boolean {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.parameter-type-indicator.type-number {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.parameter-type-indicator.type-string {
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.parameter-type-indicator.type-date {
+  background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.parameter-type-indicator.type-select {
+  background: linear-gradient(90deg, #ec4899 0%, #db2777 100%);
 }

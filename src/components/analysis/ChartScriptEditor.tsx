@@ -21,13 +21,13 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
   const [errors, setErrors] = useState<string[]>([]);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [parameterErrors, setParameterErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!script) {
       setCode(getDefaultScriptTemplate(chartType));
     }
   }, [chartType, script]);
-
   const handleAddParameter = () => {
     const newParam: ChartParameter = {
       id: `param_${Date.now()}`,
@@ -36,24 +36,110 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
       defaultValue: '',
       required: false
     };
-    setParameters([...parameters, newParam]);
+    setParameters([...parameters, newParam]);  };
+
+  const handleParameterBlur = (param: ChartParameter, field: keyof ChartParameter) => {
+    let error: string | null = null;
+    
+    if (field === 'name') {
+      // Validazione del nome
+      if (!param.name || param.name.trim() === '') {
+        error = 'Il nome del parametro è obbligatorio';
+      } else if (!/^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(param.name)) {
+        error = 'Il nome deve essere un identificatore JavaScript valido (es: minTrades, show_cumulative, $config)';
+      } else {
+        // Verifica nomi duplicati
+        const duplicateName = parameters.find(p => p.id !== param.id && p.name === param.name);
+        if (duplicateName) {
+          error = 'Esiste già un parametro con questo nome';
+        }
+      }
+    } else if (field === 'defaultValue') {
+      // Validazione del valore predefinito
+      const stringValue = param.defaultValue?.toString().trim() || '';
+      
+      if (param.required && (!stringValue || stringValue === '')) {
+        error = 'Il valore predefinito è obbligatorio per i parametri richiesti';
+      } else if (stringValue) {
+        switch (param.type) {
+          case 'number':
+            if (isNaN(parseFloat(stringValue))) {
+              error = 'Il valore deve essere un numero valido';
+            }
+            break;
+          case 'boolean':
+            if (stringValue !== 'true' && stringValue !== 'false') {
+              error = 'Il valore deve essere true o false';
+            }
+            break;
+          case 'date':
+            if (!Date.parse(stringValue)) {
+              error = 'Il valore deve essere una data valida (YYYY-MM-DD)';
+            }
+            break;
+        }
+      }
+    }
+    
+    setParameterErrors(prev => ({
+      ...prev,
+      [`${param.id}_${field}`]: error || ''
+    }));
   };
 
-  const handleUpdateParameter = (index: number, field: keyof ChartParameter, value: string | boolean) => {
+  const clearParameterError = (paramId: string, field: keyof ChartParameter) => {
+    setParameterErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`${paramId}_${field}`];
+      return newErrors;
+    });
+  };  const handleUpdateParameter = (index: number, field: keyof ChartParameter, value: string | boolean) => {
     const updated = [...parameters];
+    const param = updated[index];
+    
+    // Pulisci l'errore per questo campo quando l'utente inizia a digitare
+    clearParameterError(param.id, field);
+    
     if (field === 'defaultValue') {
       // Converti il valore in base al tipo
-      const param = updated[index];
       switch (param.type) {
-        case 'number':
-          updated[index] = { ...param, [field]: parseFloat(value as string) || 0 };
+        case 'number': {
+          const numValue = parseFloat(value as string);
+          updated[index] = { ...param, [field]: isNaN(numValue) ? '' : numValue };
           break;
-        case 'boolean':
+        }
+        case 'boolean': {
+          // Per i boolean, mantieni il valore come booleano
           updated[index] = { ...param, [field]: value === 'true' };
           break;
-        default:
+        }
+        default: {
           updated[index] = { ...param, [field]: value };
+        }
       }
+    } else if (field === 'type') {
+      // Quando cambia il tipo, resetta il valore predefinito
+      let newDefaultValue: string | number | boolean = '';
+      
+      switch (value as string) {
+        case 'number':
+          newDefaultValue = 0;
+          break;
+        case 'boolean':
+          newDefaultValue = false;
+          break;
+        case 'date':
+          newDefaultValue = '';
+          break;
+        default:
+          newDefaultValue = '';
+      }
+      
+      updated[index] = { 
+        ...param, 
+        type: value as ChartParameter['type'],
+        defaultValue: newDefaultValue
+      };
     } else {
       updated[index] = { ...updated[index], [field]: value };
     }
@@ -63,9 +149,9 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
   const handleRemoveParameter = (index: number) => {
     setParameters(parameters.filter((_, i) => i !== index));
   };
-
   const validateScript = (): boolean => {
     const newErrors: string[] = [];
+    const newParameterErrors: Record<string, string> = {};
 
     if (!name.trim()) {
       newErrors.push('Il nome è obbligatorio');
@@ -85,6 +171,62 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
       new Function(code);
     } catch (error) {
       newErrors.push(`Errore di sintassi: ${error}`);
+    }
+
+    // Validazione parametri
+    const parameterNames = new Set<string>();
+    let hasParameterErrors = false;    parameters.forEach((param) => {
+      // Validazione nome parametro
+      if (!param.name || param.name.trim() === '') {
+        newParameterErrors[`${param.id}_name`] = 'Il nome del parametro è obbligatorio';
+        hasParameterErrors = true;
+      } else if (!/^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(param.name)) {
+        newParameterErrors[`${param.id}_name`] = 'Il nome deve essere un identificatore JavaScript valido (es: minTrades, show_cumulative, $config)';
+        hasParameterErrors = true;
+      } else if (parameterNames.has(param.name)) {
+        newParameterErrors[`${param.id}_name`] = 'Nome parametro duplicato';
+        hasParameterErrors = true;
+      }
+
+      // Validazione valore predefinito
+      const stringValue = param.defaultValue?.toString().trim() || '';
+      
+      if (param.required && (!stringValue || stringValue === '')) {
+        newParameterErrors[`${param.id}_defaultValue`] = 'Il valore predefinito è obbligatorio per i parametri richiesti';
+        hasParameterErrors = true;
+      } else if (stringValue) {
+        switch (param.type) {
+          case 'number':
+            if (isNaN(parseFloat(stringValue))) {
+              newParameterErrors[`${param.id}_defaultValue`] = 'Il valore deve essere un numero valido';
+              hasParameterErrors = true;
+            }
+            break;
+          case 'boolean':
+            if (typeof param.defaultValue !== 'boolean' && stringValue !== 'true' && stringValue !== 'false') {
+              newParameterErrors[`${param.id}_defaultValue`] = 'Il valore deve essere true o false';
+              hasParameterErrors = true;
+            }
+            break;
+          case 'date':
+            if (!Date.parse(stringValue)) {
+              newParameterErrors[`${param.id}_defaultValue`] = 'Il valore deve essere una data valida (YYYY-MM-DD)';
+              hasParameterErrors = true;
+            }
+            break;
+        }
+      }
+
+      if (param.name) {
+        parameterNames.add(param.name);
+      }
+    });
+
+    if (hasParameterErrors) {
+      newErrors.push('Correggi gli errori nei parametri prima di salvare');
+      setParameterErrors(newParameterErrors);
+    } else {
+      setParameterErrors({});
     }
 
     setErrors(newErrors);
@@ -191,68 +333,133 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
           </div>
         </div>
 
-        <div className="script-parameters">
-          <div className="parameters-header">
+        <div className="script-parameters">          <div className="parameters-header">
             <h4>Parametri</h4>
             <button onClick={handleAddParameter} className="btn-small">
               + Aggiungi Parametro
             </button>
           </div>
 
-          {parameters.map((param, index) => (
-            <div key={param.id} className="parameter-editor">
-              <div className="parameter-fields">
+          {parameters.length === 0 ? (
+            <div className="parameter-help" style={{ marginBottom: '16px' }}>
+              <strong>💡 Suggerimento:</strong> I parametri permettono di creare script configurabili. 
+              Ad esempio, puoi aggiungere un parametro "minTrades" di tipo numero per filtrare i risultati.
+            </div>
+          ) : null}
+
+          {parameters.map((param, index) => {
+            const hasNameError = parameterErrors[`${param.id}_name`];
+            const hasDefaultValueError = parameterErrors[`${param.id}_defaultValue`];
+            const hasAnyError = hasNameError || hasDefaultValueError;            return (
+              <div key={param.id} className={`parameter-editor ${hasAnyError ? 'has-error' : ''}`}>
+                <div className={`parameter-type-indicator type-${param.type}`}>
+                  {param.type || 'string'}
+                </div>
+                <div className="parameter-fields">                  <input
+                    type="text"
+                    value={param.name}
+                    onChange={(e) => handleUpdateParameter(index, 'name', e.target.value)}
+                    onBlur={() => handleParameterBlur(param, 'name')}
+                    placeholder="Nome parametro (es: minTrades, show_cumulative)"
+                    className={hasNameError ? 'error' : ''}
+                  />
+                  
+                  <select
+                    value={param.type}
+                    onChange={(e) => handleUpdateParameter(index, 'type', e.target.value)}
+                  >
+                    <option value="string">Testo</option>
+                    <option value="number">Numero</option>
+                    <option value="boolean">Boolean</option>
+                    <option value="date">Data</option>
+                    <option value="select">Selezione</option>
+                  </select>                  {param.type === 'boolean' ? (
+                    <select
+                      value={param.defaultValue.toString()}
+                      onChange={(e) => handleUpdateParameter(index, 'defaultValue', e.target.value)}
+                      onBlur={() => handleParameterBlur(param, 'defaultValue')}
+                      className={`boolean-select ${hasDefaultValueError ? 'error' : ''}`}
+                    >
+                      <option value="">-- Seleziona --</option>
+                      <option value="true">true</option>
+                      <option value="false">false</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={param.type === 'number' ? 'number' : param.type === 'date' ? 'date' : 'text'}
+                      value={param.defaultValue.toString()}
+                      onChange={(e) => handleUpdateParameter(index, 'defaultValue', e.target.value)}
+                      onBlur={() => handleParameterBlur(param, 'defaultValue')}
+                      placeholder={
+                        param.type === 'number' ? '0' :
+                        param.type === 'date' ? 'YYYY-MM-DD' :
+                        'Valore predefinito'
+                      }
+                      className={hasDefaultValueError ? 'error' : ''}
+                    />
+                  )}
+
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={param.required}
+                      onChange={(e) => handleUpdateParameter(index, 'required', e.target.checked)}
+                    />
+                    Richiesto
+                  </label>
+
+                  <button
+                    onClick={() => handleRemoveParameter(index)}
+                    className="btn-danger btn-small"
+                    title="Rimuovi parametro"
+                  >
+                    🗑️
+                  </button>
+                </div>
+
                 <input
                   type="text"
-                  value={param.name}
-                  onChange={(e) => handleUpdateParameter(index, 'name', e.target.value)}
-                  placeholder="Nome parametro"
+                  value={param.description || ''}
+                  onChange={(e) => handleUpdateParameter(index, 'description', e.target.value)}
+                  placeholder="Descrizione del parametro (es: 'Numero minimo di trade da mostrare')"
+                  className="parameter-description"
                 />
                 
-                <select
-                  value={param.type}
-                  onChange={(e) => handleUpdateParameter(index, 'type', e.target.value)}
-                >
-                  <option value="string">Testo</option>
-                  <option value="number">Numero</option>
-                  <option value="boolean">Boolean</option>
-                  <option value="date">Data</option>
-                  <option value="select">Selezione</option>
-                </select>
-
-                <input
-                  type={param.type === 'number' ? 'number' : 'text'}
-                  value={param.defaultValue.toString()}
-                  onChange={(e) => handleUpdateParameter(index, 'defaultValue', e.target.value)}
-                  placeholder="Valore predefinito"
-                />
-
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={param.required}
-                    onChange={(e) => handleUpdateParameter(index, 'required', e.target.checked)}
-                  />
-                  Richiesto
-                </label>
-
-                <button
-                  onClick={() => handleRemoveParameter(index)}
-                  className="btn-danger btn-small"
-                >
-                  Rimuovi
-                </button>
+                {/* Messaggi di errore specifici */}
+                {hasNameError && (
+                  <div className="parameter-validation-error">
+                    {hasNameError}
+                  </div>
+                )}
+                {hasDefaultValueError && (
+                  <div className="parameter-validation-error">
+                    {hasDefaultValueError}
+                  </div>
+                )}
+                
+                {/* Messaggio di aiuto per tipi specifici */}
+                {!hasAnyError && param.type === 'boolean' && (
+                  <div className="parameter-help">
+                    <strong>Boolean:</strong> Il valore deve essere <code>true</code> o <code>false</code>
+                  </div>
+                )}
+                {!hasAnyError && param.type === 'number' && (
+                  <div className="parameter-help">
+                    <strong>Numero:</strong> Valori decimali supportati (es: 10, 2.5, -1.2)
+                  </div>
+                )}                {!hasAnyError && param.type === 'date' && (
+                  <div className="parameter-help">
+                    <strong>Data:</strong> Formato YYYY-MM-DD (es: 2024-01-15)
+                  </div>
+                )}
+                {!hasAnyError && param.name === '' && (
+                  <div className="parameter-help">
+                    <strong>💡 Nome parametro:</strong> Usa nomi descrittivi come <code>minTrades</code>, <code>show_cumulative</code>, <code>timeframe</code>
+                  </div>
+                )}
               </div>
-
-              <input
-                type="text"
-                value={param.description || ''}
-                onChange={(e) => handleUpdateParameter(index, 'description', e.target.value)}
-                placeholder="Descrizione parametro"
-                className="parameter-description"
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>        <div className="script-code">
           <h4>Codice Script</h4>
           <div className="code-editor">
