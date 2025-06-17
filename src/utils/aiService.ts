@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { AIMessage, AIConfig, CustomChartScript, Trade } from '../types';
+import { AIMessage, AIConfig, CustomChartScript, Trade, ChartParameter } from '../types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 export class AIService {
@@ -83,57 +83,92 @@ export class AIService {
       }
     }
   }
-
   private buildSystemPrompt(trades: Trade[], existingScripts: CustomChartScript[]): string {
     const tradeFields = trades.length > 0 ? Object.keys(trades[0]).join(', ') : '';
     const scriptNames = existingScripts.map(s => s.name).join(', ');
 
-    return `Sei un esperto assistente IA specializzato nella creazione di script personalizzati per grafici di trading.
+    return `Sei un esperto assistente IA specializzato nella creazione di script personalizzati per grafici di trading. Il tuo compito è generare script moderni, efficienti e visivamente accattivanti.
 
-CONTESTO DEL TRADING LOG:
-- Il sistema gestisce trade con i seguenti campi: ${tradeFields}
-- Script esistenti: ${scriptNames || 'Nessuno'}
-- Numero di trade disponibili: ${trades.length}
+🎯 CONTESTO DEL TRADING LOG:
+• Campi disponibili nei trade: ${tradeFields}
+• Script esistenti: ${scriptNames || 'Nessuno'}
+• Numero di trade disponibili: ${trades.length}
 
-REGOLE PER LA GENERAZIONE DI SCRIPT:
-1. Ogni script deve contenere una funzione generateChart() che ritorna un oggetto con:
-   - labels: array di stringhe per le etichette
-   - datasets: array di oggetti dataset
-   - title: titolo del grafico (opzionale)
-   - xAxisLabel, yAxisLabel: etichette degli assi (opzionali)
+📊 FORMATO RISPOSTA RICHIESTO:
+Rispondi SEMPRE con un JSON valido racchiuso tra \`\`\`json e \`\`\`, seguito da una spiegazione amichevole.
 
-2. Variabili disponibili nello script:
-   - trades: array di tutti i trade
-   - parameters: parametri configurabili dello script
-   - utils: oggetto con funzioni di utilità
+Struttura JSON obbligatoria:
+\`\`\`json
+{
+  "title": "Nome del grafico breve e descrittivo",
+  "description": "Spiegazione dettagliata di cosa mostra il grafico",
+  "chartType": "bar|line|pie|area|scatter",
+  "code": "function generateChart() { /* codice JavaScript completo */ }",
+  "parameters": [
+    {
+      "id": "param_id",
+      "name": "Nome Parametro",
+      "type": "string|number|boolean|date|select",
+      "defaultValue": "valore_default",
+      "required": true,
+      "description": "Descrizione del parametro"
+    }
+  ]
+}
+\`\`\`
 
-3. Funzioni di utilità disponibili:
-   - formatCurrency(value): formatta come valuta
-   - formatDate(date): formatta data
-   - groupByMonth(trades): raggruppa per mese
-   - groupBySymbol(trades): raggruppa per simbolo
-   - groupByStrategy(trades): raggruppa per strategia
-   - calculateMetrics(trades): calcola metriche di trading
+🛠️ VARIABILI DISPONIBILI NEL CODICE:
+• \`trades\`: Array completo di tutti i trade
+• \`parameters\`: Oggetto con parametri configurabili
+• \`utils\`: Funzioni di utilità per analisi
 
-4. Tipi di grafico supportati: bar, line, pie, area, scatter
+🔧 FUNZIONI UTILITY DISPONIBILI:
+• \`utils.formatCurrency(value)\`: Formatta valori monetari (es. €1.234,56)
+• \`utils.formatDate(date)\`: Formatta date in formato leggibile
+• \`utils.groupByMonth(trades)\`: Raggruppa trade per mese
+• \`utils.groupBySymbol(trades)\`: Raggruppa trade per simbolo
+• \`utils.groupByStrategy(trades)\`: Raggruppa trade per strategia
+• \`utils.calculateMetrics(trades)\`: Calcola metriche di performance
 
-5. Quando generi uno script, fornisci:
-   - Nome descrittivo
-   - Descrizione breve
-   - Codice JavaScript completo
-   - Parametri configurabili (se necessari)
+📈 TIPI DI GRAFICI SUPPORTATI:
+• \`bar\`: Grafici a barre per confronti e distribuzioni
+• \`line\`: Grafici a linee per trend temporali
+• \`pie\`: Grafici a torta per proporzioni
+• \`area\`: Grafici ad area per volumi nel tempo
+• \`scatter\`: Grafici di dispersione per correlazioni
 
-6. Esempi di analisi utili:
-   - P&L nel tempo
-   - Distribuzione per simbolo/strategia
-   - Analisi performance mensile
-   - Win rate per periodo
-   - Drawdown analysis
-   - Correlazioni tra metriche
+🎨 STANDARD DI QUALITÀ:
+• Codice pulito e ben commentato
+• Logica efficiente e performante
+• Colori moderni e professionali
+• Gestione errori e casi edge
+• Nomi variabili descrittivi
+• Utilizzo appropriato delle utility
 
-FORMATO RISPOSTA:
-Rispondi sempre in italiano e sii conciso ma completo. Se generi uno script, includi il codice JSON completo tra triple backticks con etichetta "json".`;
-  }  private buildChatMessages(systemPrompt: string, chatHistory: AIMessage[], userMessage: string) {
+💡 ESEMPI DI ANALISI AVANZATE:
+• Equity curves con drawdown analysis
+• Heatmap performance per periodo
+• Analisi win rate per strategia
+• Correlazioni risk/reward
+• Distribuzione P&L con percentili
+• Analisi temporale delle performance
+
+🚀 BEST PRACTICES PER IL CODICE:
+1. Filtra sempre i trade chiusi quando necessario: \`trades.filter(t => t.status === 'Closed')\`
+2. Ordina i dati per date: \`.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())\`
+3. Gestisci dati mancanti con valori di default
+4. Usa colori consistenti e professionali
+5. Aggiungi titoli e etichette descrittive
+
+⚠️ IMPORTANTE:
+• Rispondi SEMPRE in italiano
+• Il JSON deve essere valido e completo
+• Il codice deve essere pronto all'uso
+• Includi sempre una spiegazione dopo il JSON
+• Sii creativo ma mantieni la praticità
+
+Ora dimmi che tipo di grafico vorresti creare e ti fornirò un script professionale e moderno!`;
+  }private buildChatMessages(systemPrompt: string, chatHistory: AIMessage[], userMessage: string) {
     const messages: ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt }
     ];
@@ -155,33 +190,93 @@ Rispondi sempre in italiano e sii conciso ma completo. Se generi uno script, inc
 
     return messages;
   }
-
   private extractScriptFromResponse(content: string): CustomChartScript | undefined {
     try {
       // Cerca il blocco JSON nel contenuto
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-      if (!jsonMatch) return undefined;
+      if (!jsonMatch) {
+        console.log('Nessun blocco JSON trovato nella risposta');
+        return undefined;
+      }
 
       const scriptData = JSON.parse(jsonMatch[1]);
       
-      // Valida che abbia i campi necessari
-      if (!scriptData.name || !scriptData.code) return undefined;
+      // Valida che abbia i campi necessari del nuovo formato
+      if (!scriptData.title || !scriptData.code || !scriptData.chartType) {
+        console.log('JSON non valido - campi mancanti:', scriptData);
+        return undefined;
+      }
 
-      return {
+      // Costruisce lo script con il nuovo formato
+      const script: CustomChartScript = {
         id: `ai_script_${Date.now()}`,
-        name: scriptData.name,
+        name: scriptData.title,
         description: scriptData.description || '',
-        code: scriptData.code,
-        parameters: scriptData.parameters || [],
-        chartType: scriptData.chartType || 'bar',
+        code: this.formatScriptCode(scriptData.code),
+        parameters: this.validateParameters(scriptData.parameters || []),
+        chartType: this.validateChartType(scriptData.chartType),
         enabled: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+
+      console.log('Script estratto con successo:', script.name);
+      return script;
     } catch (error) {
       console.error('Errore nell\'estrazione dello script:', error);
       return undefined;
     }
+  }
+
+  private formatScriptCode(code: string): string {
+    // Assicura che il codice sia ben formattato
+    let formattedCode = code.trim();
+    
+    // Se non inizia con "function", aggiungilo
+    if (!formattedCode.startsWith('function generateChart')) {
+      formattedCode = `function generateChart() {\n${formattedCode}\n}`;
+    }
+    
+    return formattedCode;
+  }  private validateParameters(params: unknown[]): ChartParameter[] {
+    return params.map((param: unknown, index) => {
+      const p = param as Record<string, unknown>;
+      return {
+        id: (p.id as string) || `param_${index}`,
+        name: (p.name as string) || `Parametro ${index + 1}`,
+        type: this.validateParameterType(p.type as string),
+        defaultValue: this.getDefaultValue(p.defaultValue, this.validateParameterType(p.type as string)),
+        required: Boolean(p.required),
+        description: (p.description as string) || '',
+        options: p.options as string[] || undefined
+      };
+    });
+  }
+
+  private getDefaultValue(value: unknown, type: ChartParameter['type']): string | number | boolean {
+    if (value === null || value === undefined) {
+      switch (type) {
+        case 'number': return 0;
+        case 'boolean': return false;
+        default: return '';
+      }
+    }
+    
+    switch (type) {
+      case 'number': return Number(value) || 0;
+      case 'boolean': return Boolean(value);
+      default: return String(value);
+    }
+  }
+
+  private validateParameterType(type: string): ChartParameter['type'] {
+    const validTypes: ChartParameter['type'][] = ['string', 'number', 'boolean', 'date', 'select'];
+    return validTypes.includes(type as ChartParameter['type']) ? type as ChartParameter['type'] : 'string';
+  }
+
+  private validateChartType(type: string): CustomChartScript['chartType'] {
+    const validTypes: CustomChartScript['chartType'][] = ['line', 'bar', 'pie', 'area', 'scatter'];
+    return validTypes.includes(type as CustomChartScript['chartType']) ? type as CustomChartScript['chartType'] : 'bar';
   }
 }
 

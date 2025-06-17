@@ -10,6 +10,37 @@ interface AIChatProps {
   existingScripts: CustomChartScript[];
 }
 
+// Componente per formattare i messaggi con Markdown base
+const FormattedMessage: React.FC<{ content: string }> = ({ content }) => {
+  const formatContent = (text: string) => {
+    return text
+      // Bold
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Code inline
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      // Newlines
+      .replace(/\n/g, '<br />');
+  };
+
+  return (
+    <div 
+      dangerouslySetInnerHTML={{ 
+        __html: formatContent(content) 
+      }} 
+    />
+  );
+};
+
+interface AIChatProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  onScriptGenerated: (script: CustomChartScript) => void;
+  trades: Trade[];
+  existingScripts: CustomChartScript[];
+}
+
 const AIChat: React.FC<AIChatProps> = ({ 
   isOpen, 
   onToggle, 
@@ -46,12 +77,30 @@ const AIChat: React.FC<AIChatProps> = ({
       addWelcomeMessage();
     }
   };
-
   const addWelcomeMessage = () => {
     const welcomeMessage: AIMessage = {
       id: `msg_${Date.now()}`,
       role: 'assistant',
-      content: '👋 Ciao! Sono il tuo assistente IA per la creazione di script personalizzati. Dimmi che tipo di grafico vorresti creare e ti aiuterò a generare lo script.\n\nEsempi:\n• "Crea un grafico a linee del P&L cumulativo"\n• "Mostra la distribuzione dei trade per strategia"\n• "Analizza la performance mensile con un grafico a barre"',
+      content: `� **Benvenuto nell'Assistant IA per Script Personalizzati!**
+
+Sono qui per aiutarti a creare grafici avanzati per la tua analisi di trading. Basta che mi descrivi cosa vuoi visualizzare e io genererò il codice JavaScript completo.
+
+**💡 Esempi di richieste:**
+• *"Crea un grafico dell'equity curve con drawdown"*
+• *"Mostra la distribuzione P&L per strategia"*
+• *"Analizza le performance mensili con grafico a barre"*
+• *"Fai un grafico a torta dei trade per simbolo"*
+
+**🎯 Cosa posso fare:**
+✅ Generare script JavaScript pronti all'uso
+✅ Creare grafici moderni e professionali  
+✅ Aggiungere parametri configurabili
+✅ Ottimizzare per performance e leggibilità
+
+**📊 Tipi di grafico disponibili:**
+📈 Linee • 📊 Barre • 🥧 Torta • 📉 Area • 🔍 Dispersione
+
+Dimmi che tipo di analisi vorresti vedere! 🎨`,
       timestamp: new Date().toISOString()
     };
     setMessages([welcomeMessage]);
@@ -86,16 +135,44 @@ const AIChat: React.FC<AIChatProps> = ({
         timestamp: new Date().toISOString()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Se è stato generato uno script, offrilo all'utente
+      setMessages(prev => [...prev, assistantMessage]);      // Se è stato generato uno script, offrilo all'utente
       if (response.script) {
         setTimeout(() => {
-          const shouldAdd = window.confirm(
-            `Ho generato lo script "${response.script!.name}". Vuoi aggiungerlo al tuo progetto?`
-          );
+          const scriptInfo = `📊 **${response.script!.name}**
+          
+**Tipo:** ${response.script!.chartType.toUpperCase()}
+**Descrizione:** ${response.script!.description}
+${response.script!.parameters.length > 0 ? `**Parametri:** ${response.script!.parameters.length}` : ''}
+
+Vuoi aggiungere questo script al tuo progetto?`;
+
+          const shouldAdd = window.confirm(scriptInfo);
           if (shouldAdd) {
             onScriptGenerated(response.script!);
+            
+            // Aggiungi messaggio di conferma
+            const confirmMessage: AIMessage = {
+              id: `msg_${Date.now() + 2}`,
+              role: 'assistant',
+              content: `✅ **Script "${response.script!.name}" aggiunto con successo!**
+              
+Lo script è stato caricato nell'editor e è pronto per l'uso. Puoi modificarlo ulteriormente se necessario o testarlo direttamente.
+
+Vuoi creare un altro grafico? 🎨`,
+              timestamp: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, confirmMessage]);
+          } else {
+            // Messaggio se l'utente rifiuta
+            const rejectMessage: AIMessage = {
+              id: `msg_${Date.now() + 2}`,
+              role: 'assistant',
+              content: `📝 Nessun problema! Lo script è sempre disponibile nella cronologia della chat. 
+
+Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di grafico?`,
+              timestamp: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, rejectMessage]);
           }
         }, 500);
       }
@@ -203,14 +280,8 @@ const AIChat: React.FC<AIChatProps> = ({
           <div 
             key={message.id} 
             className={`ai-message ${message.role}`}
-          >
-            <div className="ai-message-content">
-              {message.content.split('\n').map((line, index) => (
-                <React.Fragment key={index}>
-                  {line}
-                  {index < message.content.split('\n').length - 1 && <br />}
-                </React.Fragment>
-              ))}
+          >            <div className="ai-message-content">
+              <FormattedMessage content={message.content} />
             </div>
             <div className="ai-message-time">
               {new Date(message.timestamp).toLocaleTimeString()}
