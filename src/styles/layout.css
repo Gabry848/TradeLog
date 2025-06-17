@@ -60,4 +60,8 @@
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  flex: 1; /* Occupa tutto lo spazio disponibile */
+  overflow: hidden; /* Rimuove la scrollbar del main */
+  box-sizing: border-box;
+  width: 100%;
 }

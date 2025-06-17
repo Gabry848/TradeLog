@@ -12,9 +12,9 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ trades }) => {
   const totalPnL = calculateTotalPnL(trades);
-
   return (
-    <>      {/* Metrics Cards */}
+    <div className="dashboard-page">
+      {/* Metrics Cards */}
       <div className="metrics-grid">
         <MetricCard title="Total P&L" value={totalPnL} />
         <WinRateCard trades={trades} />
@@ -25,7 +25,7 @@ const Dashboard: React.FC<DashboardProps> = ({ trades }) => {
 
       {/* Recent Trades */}
       <RecentTradesTable trades={trades} />
-    </>
+    </div>
   );
 };
 

@@ -60,9 +60,8 @@ export class AIService {
         max_tokens: this.config.maxTokens,
         temperature: 0.7,
         stream: false
-      });
-
-      const content = response.choices[0].message.content || '';
+      });      const content = response.choices[0].message.content || '';
+      console.log("Risultato del bot:", content); // Registra il risultato del bot
       
       // Cerca di estrarre uno script dal contenuto della risposta
       const script = this.extractScriptFromResponse(content);
@@ -70,7 +69,7 @@ export class AIService {
       return {
         message: content,
         script
-      };    } catch (error: unknown) {
+      };} catch (error: unknown) {
       console.error('Errore nella generazione dello script:', error);
       
       const errorObj = error as { status?: number; message?: string };

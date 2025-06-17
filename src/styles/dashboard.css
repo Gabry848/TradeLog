@@ -1,4 +1,12 @@
 /* Dashboard Components */
+
+/* Dashboard page layout */
+.dashboard-page {
+  height: 100%;
+  overflow-y: auto; /* Permette scroll solo per la dashboard se necessario */
+  box-sizing: border-box;
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

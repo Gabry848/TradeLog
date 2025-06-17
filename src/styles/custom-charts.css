@@ -2,8 +2,8 @@
 .custom-charts-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-height: 100vh;
+  height: 100%; /* Usa tutto lo spazio disponibile del container padre */
+  max-height: 100%;
   padding: 15px;
   background-color: #2a2d35;
   color: white;

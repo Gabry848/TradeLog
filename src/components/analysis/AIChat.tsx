@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AIMessage, CustomChartScript, Trade } from '../../types';
 import { aiService } from '../../utils/aiService';
+import ConfirmModal from '../modals/ConfirmModal';
 
 interface AIChatProps {
   isOpen: boolean;
@@ -37,14 +38,15 @@ interface AIChatProps {
   isOpen: boolean;
   onToggle: () => void;
   onScriptGenerated: (script: CustomChartScript) => void;
+  onScriptUpdated?: (scriptId: string, updatedScript: CustomChartScript) => void;
   trades: Trade[];
   existingScripts: CustomChartScript[];
 }
 
 const AIChat: React.FC<AIChatProps> = ({ 
   isOpen, 
-  onToggle, 
-  onScriptGenerated, 
+  onToggle,   onScriptGenerated, 
+  onScriptUpdated,
   trades, 
   existingScripts 
 }) => {  const [messages, setMessages] = useState<AIMessage[]>([]);
@@ -54,6 +56,14 @@ const AIChat: React.FC<AIChatProps> = ({
   const [showApiKeyInput, setShowApiKeyInput] = useState(!aiService.getApiKey());
   const [chatSize, setChatSize] = useState({ width: 400, height: 600 });
   const [isResizing, setIsResizing] = useState(false);
+  const [selectedScript, setSelectedScript] = useState<CustomChartScript | null>(null);
+  const [editMode, setEditMode] = useState<'create' | 'modify' | 'explain'>('create');
+  const [showScriptSelector, setShowScriptSelector] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    script: CustomChartScript | null;
+    editMode: 'create' | 'modify';
+  }>({ isOpen: false, script: null, editMode: 'create' });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -118,7 +128,7 @@ const AIChat: React.FC<AIChatProps> = ({
     const welcomeMessage: AIMessage = {
       id: `msg_${Date.now()}`,
       role: 'assistant',
-      content: `� **Benvenuto nell'Assistant IA per Script Personalizzati!**
+      content: `🤖 **Benvenuto nell'Assistant IA per Script Personalizzati!**
 
 Sono qui per aiutarti a creare grafici avanzati per la tua analisi di trading. Basta che mi descrivi cosa vuoi visualizzare e io genererò il codice JavaScript completo.
 
@@ -133,9 +143,16 @@ Sono qui per aiutarti a creare grafici avanzati per la tua analisi di trading. B
 ✅ Creare grafici moderni e professionali  
 ✅ Aggiungere parametri configurabili
 ✅ Ottimizzare per performance e leggibilità
+✅ **NUOVO:** Modificare script esistenti
+✅ **NUOVO:** Spiegare il funzionamento degli script
 
 **📊 Tipi di grafico disponibili:**
 📈 Linee • 📊 Barre • 🥧 Torta • 📉 Area • 🔍 Dispersione
+
+**🔧 Modalità disponibili:**
+🆕 **Crea:** Genera un nuovo script
+🔧 **Modifica:** Migliora uno script esistente  
+📖 **Spiega:** Comprendi come funziona uno script
 
 Dimmi che tipo di analisi vorresti vedere! 🎨`,
       timestamp: new Date().toISOString()
@@ -157,8 +174,7 @@ Dimmi che tipo di analisi vorresti vedere! 🎨`,
     setInputMessage('');
     setIsLoading(true);
 
-    try {
-      const response = await aiService.generateScript(
+    try {      const response = await aiService.generateScript(
         inputMessage.trim(),
         messages,
         trades,
@@ -172,45 +188,14 @@ Dimmi che tipo di analisi vorresti vedere! 🎨`,
         timestamp: new Date().toISOString()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);      // Se è stato generato uno script, offrilo all'utente
-      if (response.script) {
+      setMessages(prev => [...prev, assistantMessage]);      // Se è stato generato uno script, offri azioni solo in modalità creazione o modifica
+      if (response.script && (editMode === 'create' || editMode === 'modify')) {
         setTimeout(() => {
-          const scriptInfo = `📊 **${response.script!.name}**
-          
-**Tipo:** ${response.script!.chartType.toUpperCase()}
-**Descrizione:** ${response.script!.description}
-${response.script!.parameters.length > 0 ? `**Parametri:** ${response.script!.parameters.length}` : ''}
-
-Vuoi aggiungere questo script al tuo progetto?`;
-
-          const shouldAdd = window.confirm(scriptInfo);
-          if (shouldAdd) {
-            onScriptGenerated(response.script!);
-            
-            // Aggiungi messaggio di conferma
-            const confirmMessage: AIMessage = {
-              id: `msg_${Date.now() + 2}`,
-              role: 'assistant',
-              content: `✅ **Script "${response.script!.name}" aggiunto con successo!**
-              
-Lo script è stato caricato nell'editor e è pronto per l'uso. Puoi modificarlo ulteriormente se necessario o testarlo direttamente.
-
-Vuoi creare un altro grafico? 🎨`,
-              timestamp: new Date().toISOString()
-            };
-            setMessages(prev => [...prev, confirmMessage]);
-          } else {
-            // Messaggio se l'utente rifiuta
-            const rejectMessage: AIMessage = {
-              id: `msg_${Date.now() + 2}`,
-              role: 'assistant',
-              content: `📝 Nessun problema! Lo script è sempre disponibile nella cronologia della chat. 
-
-Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di grafico?`,
-              timestamp: new Date().toISOString()
-            };
-            setMessages(prev => [...prev, rejectMessage]);
-          }
+          setConfirmModal({
+            isOpen: true,
+            script: response.script!,
+            editMode: editMode
+          });
         }, 500);
       }
     } catch (error) {
@@ -238,6 +223,140 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
     addWelcomeMessage();
   };
 
+  // Funzione per selezionare uno script esistente
+  const handleScriptSelection = (script: CustomChartScript) => {
+    setSelectedScript(script);
+    setShowScriptSelector(false);
+    
+    let modeMessage = '';
+    if (editMode === 'modify') {
+      modeMessage = `🔧 **Script selezionato per la modifica:** "${script.name}"
+
+**Tipo:** ${script.chartType.toUpperCase()}
+**Descrizione:** ${script.description}
+
+Dimmi come vuoi modificarlo! Esempi:
+• "Aggiungi una media mobile"
+• "Cambia i colori del grafico"  
+• "Aggiungi un filtro per data"
+• "Modifica la legenda"`;
+    } else if (editMode === 'explain') {
+      modeMessage = `📖 **Spiegazione dello script:** "${script.name}"
+
+**Tipo di grafico:** ${script.chartType.toUpperCase()}
+**Descrizione:** ${script.description}
+
+🔍 **Analisi del codice:**
+
+**Cosa fa questo script:**
+Questo script genera un grafico ${script.chartType} che ${script.description.toLowerCase()}
+
+**Funzionalità principali:**
+${script.parameters.length > 0 ? 
+  `• **Parametri configurabili:** ${script.parameters.map(p => p.name).join(', ')}` : 
+  '• Nessun parametro configurabile'}
+• **Elaborazione dati:** Analizza ${script.code.includes('trades.filter') ? 'con filtri sui trade' : 'tutti i trade disponibili'}
+• **Visualizzazione:** ${script.code.includes('Chart.js') ? 'Utilizza Chart.js per il rendering' : 'Rendering personalizzato'}
+
+**💡 Vuoi che analizzi una parte specifica del codice o che spieghi come modificarlo?**`;
+    }
+
+    const selectionMessage: AIMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'assistant',
+      content: modeMessage,
+      timestamp: new Date().toISOString()
+    };
+    
+    setMessages(prev => [...prev, selectionMessage]);
+  };
+
+  // Funzione per cambiare modalità di lavoro
+  const handleModeChange = (newMode: 'create' | 'modify' | 'explain') => {
+    setEditMode(newMode);
+    setSelectedScript(null);
+    
+    let modeMessage = '';
+    if (newMode === 'create') {
+      modeMessage = `🆕 **Modalità Creazione attivata**
+
+Descrivi il grafico che vuoi creare e genererò un nuovo script per te!`;
+    } else if (newMode === 'modify') {
+      modeMessage = `🔧 **Modalità Modifica attivata**
+
+Seleziona uno script esistente per modificarlo. Posso:
+• Aggiungere nuove funzionalità
+• Modificare i colori e lo stile
+• Cambiare il tipo di grafico
+• Ottimizzare le performance
+• Aggiungere parametri configurabili`;
+      
+      if (existingScripts.length === 0) {
+        modeMessage += '\n\n⚠️ **Nessuno script disponibile per la modifica.** Crea prima alcuni script!';
+      } else {
+        setShowScriptSelector(true);
+      }
+    } else if (newMode === 'explain') {
+      modeMessage = `📖 **Modalità Spiegazione attivata**
+
+Seleziona uno script per ricevere una spiegazione dettagliata del suo funzionamento, incluso:
+• Come funziona il codice
+• Cosa fanno i parametri
+• Come modificarlo
+• Suggerimenti per miglioramenti`;
+      
+      if (existingScripts.length === 0) {
+        modeMessage += '\n\n⚠️ **Nessuno script disponibile per la spiegazione.** Crea prima alcuni script!';
+      } else {
+        setShowScriptSelector(true);
+      }
+    }
+
+    const modeChangeMessage: AIMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'assistant', 
+      content: modeMessage,
+      timestamp: new Date().toISOString()
+    };
+    
+    setMessages(prev => [...prev, modeChangeMessage]);
+  };
+
+  const handleConfirmScript = () => {
+    const script = confirmModal.script;
+    if (!script) return;
+
+    if (confirmModal.editMode === 'modify' && onScriptUpdated && selectedScript) {
+      onScriptUpdated(selectedScript.id, script);
+    } else {
+      onScriptGenerated(script);
+    }
+
+    // Messaggio di conferma
+    const confirmMessage: AIMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'assistant',
+      content: `✅ **Script "${script.name}" ${confirmModal.editMode === 'modify' ? 'modificato' : 'aggiunto'} con successo!**\n\nLo script è pronto per l'uso. Vuoi lavorare su un altro grafico? 🎨`,
+      timestamp: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, confirmMessage]);
+    
+    setConfirmModal({ isOpen: false, script: null, editMode: 'create' });
+  };
+
+  const handleCancelScript = () => {
+    // Messaggio se l'utente rifiuta
+    const rejectMessage: AIMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'assistant',
+      content: `📝 Nessun problema! Lo script è sempre disponibile nella cronologia della chat.\n\nVuoi che modifichi ancora qualcosa o preferisci provare con un altro tipo di grafico?`,
+      timestamp: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, rejectMessage]);
+    
+    setConfirmModal({ isOpen: false, script: null, editMode: 'create' });
+  };
+
   if (!isOpen) {
     return (
       <button 
@@ -249,7 +368,8 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
       </button>
     );
   }
-  return (    <div 
+  return (
+    <div 
       ref={chatRef}
       className="ai-chat-container" 
       style={{ 
@@ -258,7 +378,42 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
         cursor: isResizing ? 'nw-resize' : 'default'
       }}
       data-resizing={isResizing}
-    >      {/* Resize handles migliorati */}
+    >
+      {/* Modalità di lavoro */}
+      <div className="ai-chat-modes">
+        <button
+          className={editMode === 'create' ? 'active' : ''}
+          onClick={() => handleModeChange('create')}
+        >🆕 Crea</button>
+        <button
+          className={editMode === 'modify' ? 'active' : ''}
+          onClick={() => handleModeChange('modify')}
+        >🔧 Modifica</button>
+        <button
+          className={editMode === 'explain' ? 'active' : ''}
+          onClick={() => handleModeChange('explain')}
+        >📖 Spiega</button>
+      </div>
+      {/* Selettore script se necessario */}
+      {showScriptSelector && (
+        <div className="ai-script-selector">
+          <label>Seleziona uno script:</label>
+          <select
+            onChange={e => {
+              const script = existingScripts.find(s => s.id === e.target.value);
+              if (script) handleScriptSelection(script);
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>-- Scegli uno script --</option>
+            {existingScripts.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Resize handles migliorati */}
       <div 
         className="resize-handle resize-handle-nw"
         onMouseDown={(e) => handleResizeStart(e, 'nw')}
@@ -387,7 +542,28 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
         <small>
           Alimentato da OpenRouter • {trades.length} trade disponibili
         </small>
-      </div>
+      </div>      {/* Modal di conferma per applicazione script */}
+      {confirmModal.isOpen && confirmModal.script && (
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={`${confirmModal.editMode === 'modify' ? 'Aggiornare' : 'Aggiungere'} Script`}
+          message={`
+            <div>
+              <p><strong>📊 ${confirmModal.script.name}</strong></p>
+              <p><strong>Tipo:</strong> ${confirmModal.script.chartType.toUpperCase()}</p>
+              <p><strong>Descrizione:</strong> ${confirmModal.script.description}</p>
+              ${confirmModal.script.parameters.length > 0 ? `<p><strong>Parametri:</strong> ${confirmModal.script.parameters.length}</p>` : ''}
+              <br>
+              <p>Vuoi ${confirmModal.editMode === 'modify' ? 'aggiornare' : 'aggiungere'} questo script al tuo progetto?</p>
+            </div>
+          `}
+          onConfirm={handleConfirmScript}
+          onCancel={handleCancelScript}
+          confirmText={confirmModal.editMode === 'modify' ? 'Aggiorna' : 'Aggiungi'}
+          cancelText="Annulla"
+          type="success"
+        />
+      )}
     </div>
   );
 };

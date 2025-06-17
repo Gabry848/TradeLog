@@ -461,6 +461,63 @@
   justify-content: center;
 }
 
+/* Confirm Modal Styles */
+.confirm-modal {
+  max-width: 500px;
+}
+
+.confirm-modal-info .modal-header {
+  border-bottom-color: #3b82f6;
+}
+
+.confirm-modal-warning .modal-header {
+  border-bottom-color: #f59e0b;
+}
+
+.confirm-modal-danger .modal-header {
+  border-bottom-color: #ef4444;
+}
+
+.confirm-modal-success .modal-header {
+  border-bottom-color: #10b981;
+}
+
+.modal-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2em;
+}
+
+.confirm-message {
+  color: #e5e7eb;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.confirm-message strong {
+  color: #f9fafb;
+  font-weight: 600;
+}
+
+.modal-btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 1px solid #ef4444;
+}
+
+.modal-btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.modal-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: 1px solid #3b82f6;
+}
+
+.modal-btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Responsive per form più piccoli */
 @media (max-width: 1200px) {
   .field-modal .form-grid {
