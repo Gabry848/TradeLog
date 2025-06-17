@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import { CustomChartScript, ChartParameter } from '../../types';
+import { CustomChartScript, ChartParameter, Trade } from '../../types';
+import AIChat from './AIChat';
+import '../../styles/ai-chat.css';
 
 interface ChartScriptEditorProps {
   script?: CustomChartScript;
   onSave: (script: CustomChartScript) => void;
   onCancel: () => void;
+  trades?: Trade[];
+  existingScripts?: CustomChartScript[];
 }
 
-const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, onCancel }) => {
+const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, onCancel, trades = [], existingScripts = [] }) => {
   const [name, setName] = useState(script?.name || '');
   const [description, setDescription] = useState(script?.description || '');
   const [chartType, setChartType] = useState<'line' | 'bar' | 'pie' | 'area' | 'scatter'>(script?.chartType || 'bar');
@@ -16,6 +20,7 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
   const [parameters, setParameters] = useState<ChartParameter[]>(script?.parameters || []);
   const [errors, setErrors] = useState<string[]>([]);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   useEffect(() => {
     if (!script) {
@@ -106,11 +111,26 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
     onSave(scriptToSave);
   };
 
+  const handleAIScriptGenerated = (generatedScript: CustomChartScript) => {
+    setName(generatedScript.name);
+    setDescription(generatedScript.description);
+    setChartType(generatedScript.chartType);
+    setCode(generatedScript.code);
+    setParameters(generatedScript.parameters);
+    setIsAIChatOpen(false);
+  };
+
   return (
-    <div className="chart-script-editor">
-      <div className="script-editor-header">
+    <div className="chart-script-editor">      <div className="script-editor-header">
         <h3>{script ? 'Modifica Script' : 'Nuovo Script'}</h3>
         <div className="script-editor-actions">
+          <button 
+            onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+            className="btn-ai"
+            title="Apri Assistant IA"
+          >
+            🤖 Assistant IA
+          </button>
           <button onClick={onCancel} className="btn-secondary">
             Annulla
           </button>
@@ -358,10 +378,18 @@ return {
               <li><code>groupBySymbol(trades)</code> - Raggruppa per simbolo</li>
               <li><code>groupByStrategy(trades)</code> - Raggruppa per strategia</li>
               <li><code>calculateMetrics(trades)</code> - Calcola metriche</li>
-            </ul>
-          </div>
+            </ul>          </div>
         </div>
       </div>
+
+      {/* Componente AI Chat */}
+      <AIChat
+        isOpen={isAIChatOpen}
+        onToggle={() => setIsAIChatOpen(!isAIChatOpen)}
+        onScriptGenerated={handleAIScriptGenerated}
+        trades={trades}
+        existingScripts={existingScripts}
+      />
     </div>
   );
 };

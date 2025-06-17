@@ -180,3 +180,25 @@ export interface ChartMetrics {
   profitFactor: number;
   maxDrawdown: number;
 }
+
+// Nuovi tipi per l'agente IA
+export interface AIMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface AIConfig {
+  apiKey: string;
+  model: string;
+  baseURL: string;
+  maxTokens: number;
+}
+
+export interface AIScriptGenerationContext {
+  trades: Trade[];
+  existingScripts: CustomChartScript[];
+  userMessage: string;
+  chatHistory: AIMessage[];
+}

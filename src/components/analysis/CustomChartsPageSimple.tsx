@@ -67,14 +67,15 @@ const CustomChartsPageSimple: React.FC<CustomChartsPageProps> = ({
   };
 
   if (isEditing) {
-    return (
-      <ChartScriptEditor
+    return (      <ChartScriptEditor
         script={editingScript}
         onSave={handleSaveScript}
         onCancel={() => {
           setIsEditing(false);
           setEditingScript(undefined);
         }}
+        trades={trades}
+        existingScripts={customScripts}
       />
     );
   }
