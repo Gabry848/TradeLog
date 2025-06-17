@@ -141,11 +141,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className={`field-badge ${field.required ? 'required' : 'optional'}`}>
                   {field.required ? 'Obbligatorio' : 'Opzionale'}
                 </span>
-              </div>
-              <div className="field-details">
+              </div>              <div className="field-details">
                 <div className="field-detail">
-                  <strong>Tipo:</strong> {field.type === 'text' ? 'Testo' : field.type === 'number' ? 'Numero' : field.type === 'date' ? 'Data' : 'Selezione'}
-                </div>
+                  <strong>Tipo:</strong> {
+                    field.type === 'text' ? 'Testo' : 
+                    field.type === 'number' ? 'Numero' : 
+                    field.type === 'date' ? 'Data' : 
+                    field.type === 'calculated' ? 'Calcolato' : 
+                    'Selezione'
+                  }                </div>
+                {field.formula && (
+                  <div className="field-detail">
+                    <strong>Formula:</strong> <code>{field.formula}</code>
+                  </div>
+                )}
                 {field.placeholder && (
                   <div className="field-detail">
                     <strong>Esempio:</strong> {field.placeholder}
