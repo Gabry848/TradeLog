@@ -45,12 +45,33 @@
   justify-content: space-between;
   align-items: center;
   border-radius: 16px 16px 0 0;
+  position: relative;
+  user-select: none;
 }
 
 .ai-chat-title {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.ai-chat-title:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ai-chat-title::after {
+  content: "⤡";
+  position: absolute;
+  top: -2px;
+  right: 4px;
+  font-size: 10px;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .ai-chat-title h4 {
@@ -340,39 +361,47 @@
   color: #6b7280;
 }
 
-/* Resize handles */
+/* Resize handles migliorati */
 .resize-handle {
   position: absolute;
-  background: transparent;
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px solid rgba(102, 126, 234, 0.3);
   z-index: 10;
+  transition: all 0.2s ease;
 }
 
 .resize-handle-nw {
-  top: 0;
-  left: 0;
-  width: 16px;
-  height: 16px;
+  top: -2px;
+  left: -2px;
+  width: 20px;
+  height: 20px;
   cursor: nw-resize;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.2);
 }
 
 .resize-handle-n {
-  top: 0;
-  left: 16px;
-  right: 0;
-  height: 4px;
+  top: -2px;
+  left: 20px;
+  right: 20px;
+  height: 8px;
   cursor: n-resize;
+  border-radius: 4px;
 }
 
 .resize-handle-w {
-  top: 16px;
-  left: 0;
-  width: 4px;
-  bottom: 0;
+  top: 20px;
+  left: -2px;
+  width: 8px;
+  bottom: 20px;
   cursor: w-resize;
+  border-radius: 4px;
 }
 
 .resize-handle:hover {
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(102, 126, 234, 0.4);
+  border-color: rgba(102, 126, 234, 0.6);
+  transform: scale(1.1);
 }
 
 .ai-chat-container[data-resizing="true"] {

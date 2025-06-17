@@ -67,10 +67,10 @@ const AIChat: React.FC<AIChatProps> = ({
       textareaRef.current.focus();
     }
   }, [isOpen]);
-
-  // Gestione resize della chat
-  const handleMouseDown = (e: React.MouseEvent, direction: 'nw' | 'n' | 'w') => {
+  // Gestione resize della chat - Soluzione alternativa migliorata
+  const handleResizeStart = (e: React.MouseEvent, direction: 'nw' | 'n' | 'w' | 'header') => {
     e.preventDefault();
+    e.stopPropagation();
     setIsResizing(true);
     
     const startX = e.clientX;
@@ -79,16 +79,15 @@ const AIChat: React.FC<AIChatProps> = ({
     const startHeight = chatSize.height;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-      
       let newWidth = startWidth;
       let newHeight = startHeight;
       
-      if (direction.includes('w')) {
-        newWidth = Math.max(320, startWidth + (startX - e.clientX));
+      // Per l'header, abilita il ridimensionamento in tutte le direzioni
+      if (direction === 'header' || direction.includes('w')) {
+        newWidth = Math.max(300, Math.min(800, startWidth + (startX - e.clientX)));
       }
-      if (direction.includes('n')) {
-        newHeight = Math.max(400, startHeight + (startY - e.clientY));
+      if (direction === 'header' || direction.includes('n')) {
+        newHeight = Math.max(300, Math.min(800, startHeight + (startY - e.clientY)));
       }
       
       setChatSize({ width: newWidth, height: newHeight });
@@ -259,23 +258,28 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
         cursor: isResizing ? 'nw-resize' : 'default'
       }}
       data-resizing={isResizing}
-    >
-      {/* Resize handles */}
+    >      {/* Resize handles migliorati */}
       <div 
         className="resize-handle resize-handle-nw"
-        onMouseDown={(e) => handleMouseDown(e, 'nw')}
+        onMouseDown={(e) => handleResizeStart(e, 'nw')}
+        title="Ridimensiona trascinando"
       />
       <div 
         className="resize-handle resize-handle-n"
-        onMouseDown={(e) => handleMouseDown(e, 'n')}
+        onMouseDown={(e) => handleResizeStart(e, 'n')}
+        title="Ridimensiona altezza"
       />
       <div 
         className="resize-handle resize-handle-w"
-        onMouseDown={(e) => handleMouseDown(e, 'w')}
-      />
-
-      <div className="ai-chat-header">
-        <div className="ai-chat-title">
+        onMouseDown={(e) => handleResizeStart(e, 'w')}
+        title="Ridimensiona larghezza"
+      />      <div className="ai-chat-header">
+        <div 
+          className="ai-chat-title"
+          onMouseDown={(e) => handleResizeStart(e, 'header')}
+          style={{ cursor: isResizing ? 'nw-resize' : 'move' }}
+          title="Trascina per ridimensionare"
+        >
           <span className="ai-icon">🤖</span>
           <h4>Assistant IA</h4>
         </div>
@@ -379,27 +383,11 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
         >
           {isLoading ? '⏳' : '➤'}
         </button>
-      </div>
-
-      <div className="ai-chat-footer">
+      </div>      <div className="ai-chat-footer">
         <small>
           Alimentato da OpenRouter • {trades.length} trade disponibili
         </small>
       </div>
-
-      {/* Resize handles */}
-      <div 
-        className="ai-chat-resize-handle nw"
-        onMouseDown={(e) => handleMouseDown(e, 'nw')}
-      />
-      <div 
-        className="ai-chat-resize-handle n"
-        onMouseDown={(e) => handleMouseDown(e, 'n')}
-      />
-      <div 
-        className="ai-chat-resize-handle w"
-        onMouseDown={(e) => handleMouseDown(e, 'w')}
-      />
     </div>
   );
 };
