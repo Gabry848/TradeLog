@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Editor from '@monaco-editor/react';
 import { CustomChartScript, ChartParameter } from '../../types';
 
 interface ChartScriptEditorProps {
@@ -14,6 +15,7 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
   const [code, setCode] = useState(script?.code || getDefaultScriptTemplate(chartType));
   const [parameters, setParameters] = useState<ChartParameter[]>(script?.parameters || []);
   const [errors, setErrors] = useState<string[]>([]);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
 
   useEffect(() => {
     if (!script) {
@@ -231,18 +233,112 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
               />
             </div>
           ))}
-        </div>
-
-        <div className="script-code">
+        </div>        <div className="script-code">
           <h4>Codice Script</h4>
           <div className="code-editor">
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Inserisci il codice JavaScript..."
-              rows={20}
-              className="code-textarea"
-              spellCheck={false}
+            <div className="code-editor-header">
+              <button
+                type="button"
+                onClick={() => setIsDarkTheme(!isDarkTheme)}
+                className="toggle-theme-btn"
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  backgroundColor: isDarkTheme ? '#424242' : '#e0e0e0',
+                  color: isDarkTheme ? 'white' : 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginBottom: '8px'
+                }}
+              >
+                {isDarkTheme ? '☀️ Tema Chiaro' : '🌙 Tema Scuro'}
+              </button>
+            </div>            <Editor
+              height="400px"
+              defaultLanguage="javascript"
+              theme={isDarkTheme ? "vs-dark" : "light"}
+              value={code || `// 🚀 Benvenuto nell'editor di script personalizzati!
+// Utilizza le variabili disponibili per creare grafici dinamici:
+//
+// 📊 Variabili disponibili:
+// - trades: Array di tutti i trade
+// - parameters: Parametri dello script
+// - utils: Funzioni di utilità
+//
+// 🛠️ Funzioni di utilità:
+// - utils.formatCurrency(value)
+// - utils.formatDate(date)
+// - utils.groupByMonth(trades)
+// - utils.groupBySymbol(trades)
+// - utils.groupByStrategy(trades)
+// - utils.calculateMetrics(trades)
+//
+// 💡 Esempio base:
+const data = trades.map(trade => ({
+  date: trade.entryDate,
+  value: trade.pnl
+}));
+
+return {
+  type: 'line',
+  data: data,
+  options: {
+    title: 'P&L nel tempo',
+    responsive: true
+  }
+};`}
+              onChange={(value) => setCode(value || '')}
+              options={{
+                selectOnLineNumbers: true,
+                roundedSelection: false,
+                readOnly: false,
+                cursorStyle: 'line',
+                automaticLayout: true,
+                fontSize: 14,
+                lineNumbers: 'on',
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                lineDecorationsWidth: 10,
+                lineNumbersMinChars: 3,
+                glyphMargin: false,
+                folding: true,
+                acceptSuggestionOnCommitCharacter: true,
+                acceptSuggestionOnEnter: 'on',
+                accessibilitySupport: 'auto',
+                autoIndent: 'full',
+                contextmenu: true,
+                dragAndDrop: false,
+                links: true,
+                mouseWheelZoom: true,
+                multiCursorMergeOverlapping: true,
+                multiCursorModifier: 'alt',
+                overviewRulerBorder: false,
+                overviewRulerLanes: 2,
+                quickSuggestions: true,
+                quickSuggestionsDelay: 100,
+                renderLineHighlight: 'line',
+                renderWhitespace: 'selection',
+                rulers: [],
+                scrollbar: {
+                  vertical: 'visible',
+                  horizontal: 'visible',
+                  arrowSize: 11,
+                  useShadows: true,
+                  verticalHasArrows: false,
+                  horizontalHasArrows: false,
+                },
+                smoothScrolling: true,
+                tabCompletion: 'on',
+                tabSize: 2,
+                useTabStops: false,
+                wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
+                wordWrapBreakAfterCharacters: '\t})]?|&,;',
+                wordWrapBreakBeforeCharacters: '{([+',
+                wordWrapColumn: 80,
+                wrappingIndent: 'none',
+              }}
             />
           </div>
           

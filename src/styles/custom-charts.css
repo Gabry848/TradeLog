@@ -623,58 +623,67 @@
   margin-bottom: 15px;
 }
 
-.code-textarea {
-  width: 100%;
-  min-height: 400px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  color: #ffffff;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: vertical;
+/* Code Editor with Monaco (VS Code engine) */
+.code-editor-header {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.code-textarea:focus {
-  outline: none;
-  border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(0, 0, 0, 0.4);
+.toggle-theme-btn {
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-.code-help {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.toggle-theme-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.code-help h5 {
-  margin: 0 0 10px 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
+/* Monaco Editor custom styling */
+.monaco-editor {
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-.code-help ul {
-  margin: 0 0 15px 0;
-  padding-left: 20px;
+.monaco-editor.focused {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
-.code-help li {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.85rem;
-  line-height: 1.4;
-  margin-bottom: 4px;
+/* Monaco scrollbars customization */
+.monaco-scrollable-element > .scrollbar > .slider {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 4px !important;
 }
 
-.code-help code {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  color: #60a5fa;
-  font-size: 0.8rem;
+.monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.monaco-scrollable-element > .scrollbar {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Monaco minimap */
+.monaco-editor .minimap {
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Monaco suggestions */
+.monaco-editor .suggest-widget {
+  border-radius: 6px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Monaco find widget */
+.monaco-editor .find-widget {
+  border-radius: 6px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Buttons */
