@@ -340,6 +340,54 @@
   color: #6b7280;
 }
 
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+}
+
+.resize-handle-nw {
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nw-resize;
+}
+
+.resize-handle-n {
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 4px;
+  cursor: n-resize;
+}
+
+.resize-handle-w {
+  top: 16px;
+  left: 0;
+  width: 4px;
+  bottom: 0;
+  cursor: w-resize;
+}
+
+.resize-handle:hover {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.ai-chat-container[data-resizing="true"] {
+  user-select: none;
+  pointer-events: auto;
+}
+
+.ai-chat-container[data-resizing="true"] * {
+  pointer-events: none;
+}
+
+.ai-chat-container[data-resizing="true"] .resize-handle {
+  pointer-events: auto;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .ai-chat-container {

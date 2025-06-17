@@ -47,14 +47,16 @@ const AIChat: React.FC<AIChatProps> = ({
   onScriptGenerated, 
   trades, 
   existingScripts 
-}) => {
-  const [messages, setMessages] = useState<AIMessage[]>([]);
+}) => {  const [messages, setMessages] = useState<AIMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState(aiService.getApiKey());
   const [showApiKeyInput, setShowApiKeyInput] = useState(!aiService.getApiKey());
+  const [chatSize, setChatSize] = useState({ width: 400, height: 600 });
+  const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollToBottom();
@@ -65,6 +67,42 @@ const AIChat: React.FC<AIChatProps> = ({
       textareaRef.current.focus();
     }
   }, [isOpen]);
+
+  // Gestione resize della chat
+  const handleMouseDown = (e: React.MouseEvent, direction: 'nw' | 'n' | 'w') => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = chatSize.width;
+    const startHeight = chatSize.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      
+      if (direction.includes('w')) {
+        newWidth = Math.max(320, startWidth + (startX - e.clientX));
+      }
+      if (direction.includes('n')) {
+        newHeight = Math.max(400, startHeight + (startY - e.clientY));
+      }
+      
+      setChatSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -212,9 +250,30 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
       </button>
     );
   }
+  return (    <div 
+      ref={chatRef}
+      className="ai-chat-container" 
+      style={{ 
+        width: `${chatSize.width}px`, 
+        height: `${chatSize.height}px`,
+        cursor: isResizing ? 'nw-resize' : 'default'
+      }}
+      data-resizing={isResizing}
+    >
+      {/* Resize handles */}
+      <div 
+        className="resize-handle resize-handle-nw"
+        onMouseDown={(e) => handleMouseDown(e, 'nw')}
+      />
+      <div 
+        className="resize-handle resize-handle-n"
+        onMouseDown={(e) => handleMouseDown(e, 'n')}
+      />
+      <div 
+        className="resize-handle resize-handle-w"
+        onMouseDown={(e) => handleMouseDown(e, 'w')}
+      />
 
-  return (
-    <div className="ai-chat-container">
       <div className="ai-chat-header">
         <div className="ai-chat-title">
           <span className="ai-icon">🤖</span>
@@ -327,6 +386,20 @@ Vuoi che modifichi qualcosa nel codice o preferisci provare con un altro tipo di
           Alimentato da OpenRouter • {trades.length} trade disponibili
         </small>
       </div>
+
+      {/* Resize handles */}
+      <div 
+        className="ai-chat-resize-handle nw"
+        onMouseDown={(e) => handleMouseDown(e, 'nw')}
+      />
+      <div 
+        className="ai-chat-resize-handle n"
+        onMouseDown={(e) => handleMouseDown(e, 'n')}
+      />
+      <div 
+        className="ai-chat-resize-handle w"
+        onMouseDown={(e) => handleMouseDown(e, 'w')}
+      />
     </div>
   );
 };
