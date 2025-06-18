@@ -1,6 +1,7 @@
 import React from 'react';
 import { TradeField } from '../../types';
 import { defaultTradeFields } from '../../data/defaults';
+import { useFolderPicker } from '../../hooks/useFolderPicker';
 import FieldsManager from './FieldsManager';
 
 interface SettingsPageProps {
@@ -10,7 +11,6 @@ interface SettingsPageProps {
   onFilePathChange: (path: string) => void;
   onDestinationPathChange: (path: string) => void;
   onTradeFieldsUpdate: (fields: TradeField[]) => void;
-  onSelectDestinationFolder: () => void;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -20,8 +20,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onFilePathChange,
   onDestinationPathChange,
   onTradeFieldsUpdate,
-  onSelectDestinationFolder,
-}) => {const getFullFilePath = () => {
+}) => {
+  const { selectFolder, isSelecting, error } = useFolderPicker();
+
+  const handleSelectFolder = async () => {
+    const selectedPath = await selectFolder();
+    if (selectedPath) {
+      onDestinationPathChange(selectedPath);
+    }
+  };const getFullFilePath = () => {
     if (!destinationPath) return filePath;
     const separator = destinationPath.includes("/") ? "/" : "\\";
     const cleanDestination = destinationPath.endsWith("/") || destinationPath.endsWith("\\")
@@ -39,12 +46,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           <h4>💡 Come funziona:</h4>
           <ul>
             <li><strong>File Unico:</strong> Tutte le operazioni vengono salvate SOLO nel file specificato</li>
-            <li><strong>Inizio Pulito:</strong> L'applicazione inizia sempre vuota, senza operazioni demo</li>
             <li><strong>Auto-save:</strong> Ogni operazione viene salvata automaticamente nel file</li>
             <li><strong>Import CSV:</strong> Importa operazioni da file esterni (sostituisce i dati attuali)</li>
             <li><strong>Export CSV:</strong> Crea una copia del file in un'altra posizione</li>
-            <li><strong>Browser Web:</strong> Download nella cartella predefinita</li>
-            <li><strong>App Electron:</strong> Salvataggio diretto nella cartella specificata</li>
+            <li><strong>Browser Web:</strong> Download nella cartella predefinita del browser</li>
+            <li><strong>App Electron:</strong> Salvataggio diretto nella cartella specificata dall'utente. La cartella selezionata viene memorizzata e utilizzata automaticamente ad ogni avvio dell'applicazione, garantendo che tutti i tuoi dati vengano sempre salvati nella stessa posizione.</li>
           </ul>
         </div>
 
@@ -78,19 +84,23 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 onChange={(e) => onDestinationPathChange(e.target.value)}
                 placeholder="es: C:\Users\Nome\Documents\Trading"
                 className="config-input"
-              />
-              <button
-                onClick={onSelectDestinationFolder}
+              />              <button
+                onClick={handleSelectFolder}
                 className="browse-btn"
                 type="button"
+                disabled={isSelecting}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                 </svg>
-                Sfoglia
-              </button>
-            </div>
+                {isSelecting ? 'Selezione...' : 'Sfoglia'}
+              </button>            </div>
             <small>Cartella dove salvare i file CSV</small>
+            {error && (
+              <div style={{ color: '#e53e3e', fontSize: '12px', marginTop: '4px' }}>
+                {error}
+              </div>
+            )}
           </div>
         </div>
 

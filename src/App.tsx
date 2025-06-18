@@ -276,23 +276,7 @@ function App() {
       setEditingCell(null);
     }
   };
-
-  // Settings handlers
-  const selectDestinationFolder = async () => {
-    if (window.electronAPI && window.electronAPI.selectFolder) {
-      try {
-        const result = await window.electronAPI.selectFolder();
-        if (!result.canceled && result.filePaths.length > 0) {
-          setDestinationPath(result.filePaths[0]);
-        }
-      } catch (error) {
-        console.error('Error selecting folder:', error);
-        alert('Errore nella selezione della cartella. Assicurati di usare la versione Electron dell\'app.');
-      }
-    } else {
-      alert('La selezione cartella è disponibile solo nella versione desktop (Electron) dell\'applicazione.');
-    }
-  };
+  // Settings handlers - rimossa selectDestinationFolder, ora gestita dal hook useFolderPicker
   // Render main content based on active tab
   const renderMainContent = () => {
     console.log('renderMainContent called with activeTab:', activeTab);
@@ -340,7 +324,6 @@ function App() {
             onFilePathChange={setFilePath}
             onDestinationPathChange={setDestinationPath}
             onTradeFieldsUpdate={setTradeFields}
-            onSelectDestinationFolder={selectDestinationFolder}
           />
         );
       

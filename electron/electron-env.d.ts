@@ -29,4 +29,5 @@ interface Window {
     saveFile: (data: string, filePath: string) => Promise<void>
     readFile: (filePath: string) => Promise<string>
   }
+  showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>
 }
