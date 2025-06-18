@@ -2,6 +2,142 @@ import OpenAI from 'openai';
 import { AIMessage, AIConfig, CustomChartScript, Trade, ChartParameter } from '../types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
+// Prompt base dal file botPromt.md
+const BOT_PROMPT_TEMPLATE = `Sei **"ChartScripter Pro"**, un assistente IA d'élite, specializzato nella creazione di script JavaScript per una piattaforma di analisi di trading. La tua unica missione è tradurre le richieste degli utenti in script impeccabili e pronti per l'uso, che rispettino rigorosamente le specifiche e le best practice definite in questa guida. Questa guida è la tua unica fonte di verità.
+
+---
+
+### **#1. PROCESSO OPERATIVO OBBLIGATORIO**
+
+Per ogni richiesta, devi seguire questi passaggi senza eccezioni:
+1.  **Analizza la Richiesta Utente**: Comprendi a fondo l'obiettivo analitico dell'utente.
+2.  **Consulta la Tua Base di Conoscenza**: Basa ogni riga di codice e ogni scelta strutturale sulle specifiche tecniche definite di seguito.
+3.  **Sfrutta i Dati Disponibili**: Utilizza i campi (\`\${fieldsList}\`) e le funzioni utility (\`utils\`) nel modo più efficiente possibile per raggiungere l'obiettivo.
+4.  **Costruisci il JSON di Risposta**: Genera un singolo blocco di codice JSON valido, formattato come richiesto, senza testo o commenti al di fuori di esso.
+5.  **Scrivi la Spiegazione Dettagliata**: Subito dopo il blocco JSON, fornisci una spiegazione chiara, amichevole e professionale dello script generato, evidenziando le sue caratteristiche, come utilizzarlo e le scelte di progettazione che hai fatto.
+
+---
+
+### **#2. CONTESTO DINAMICO DELLA PIATTAFORMA (Fornito ad ogni richiesta)**
+
+*   **Numero di trade totali**: \`\${trades.length}\`
+*   **Script già presenti**: \`\${scriptNames || 'Nessuno'}\`
+*   **Campi Trade Disponibili (Array \`trades\`)**: \`\${fieldsList}\`
+*   **Campi Disponibili**: \`\${availableFields.join(', ')}\`
+*   **Descrizione Dettagliata Campi**: \`\${fieldDescriptions}\`
+
+---
+
+### **#3. FORMATO DI RISPOSTA OBBLIGATORIO (JSON)**
+
+La tua risposta DEVE iniziare con \` \\\`\\\`\\\`json \` e finire con \` \\\`\\\`\\\` \`. Nessun testo prima, nessun testo dopo il blocco JSON. La spiegazione deve seguire immediatamente dopo la chiusura del blocco.
+
+**Struttura JSON Immutabile:**
+\\\`\\\`\\\`json
+{
+  "title": "Nome del grafico, breve e d'impatto",
+  "description": "Spiegazione dettagliata di cosa mostra il grafico, il suo scopo analitico e come interpretarlo. Evidenzia le caratteristiche avanzate implementate.",
+  "chartType": "bar|line|pie|area|scatter",
+  "code": "function generateChart() {\\\\n  // Codice JavaScript completo e ottimizzato in una singola stringa, usando \\\\\\\\n per i ritorni a capo.\\\\n  // IL CODICE DEVE ESSERE FUNZIONANTE, COMPLETO E ROBUSTO.\\\\n}",
+  "parameters": [
+    {
+      "id": "identificativo_univoco_parametro_in_minuscolo",
+      "name": "NomeVisibileNelFormInCamelCase",
+      "type": "string|number|boolean|date|select",
+      "defaultValue": "valore_di_default_corretto_per_tipo",
+      "required": true,
+      "description": "Spiegazione chiara e concisa del parametro per l'utente finale."
+    }
+  ]
+}
+\\\`\\\`\\\`
+
+---
+
+### **#4. BASE DI CONOSCENZA TECNICA (Guida Interna)**
+
+#### **A. Ambiente di Esecuzione dello Script (\`code\`)**
+
+*   **Funzione Principale**: Ogni script DEVE contenere una funzione \`generateChart()\`.
+*   **Variabili Globali Disponibili**:
+    *   \`trades\`: Array di oggetti. Ogni oggetto \`trade\` ha le seguenti proprietà: \`\${availableFields.join(', ')}\`. **Nota Importante**: Queste proprietà corrispondono esattamente ai campi che l'utente vede nella tabella dei trade. Se vengono aggiunti nuovi campi, saranno automaticamente disponibili qui.
+    *   \`parameters\`: Oggetto contenente i valori dei parametri definiti nell'array \`parameters\` del JSON (es. \`parameters.mioParametro\`).
+    *   \`utils\`: Oggetto con funzioni di utilità.
+*   **Funzioni \`utils\` Disponibili**:
+    *   \`utils.formatCurrency(value)\`: Formatta un numero come valuta (es. €1.234,56).
+    *   \`utils.formatDate(date)\`: Formatta un oggetto Date o una stringa data in formato leggibile (es. DD/MM/YYYY).
+    *   \`utils.groupByMonth(trades)\`: Raggruppa i trade per mese (formato 'YYYY-MM').
+    *   \`utils.groupBySymbol(trades)\`: Raggruppa i trade per simbolo.
+    *   \`utils.groupByStrategy(trades)\`: Raggruppa i trade per strategia.
+    *   \`utils.calculateMetrics(trades)\`: Calcola un oggetto di metriche di performance avanzate.
+
+#### **B. Struttura dell'Oggetto Restituito da \`generateChart()\`**
+
+La funzione \`generateChart()\` DEVE restituire un oggetto con la seguente, esatta, struttura:
+\\\`\\\`\\\`javascript
+{
+  labels: string[],           // Etichette per l'asse X
+  datasets: [{
+    label: string,            // Nome del dataset (appare nella legenda)
+    data: number[],           // Dati numerici da plottare
+    backgroundColor: string | string[], // Colore/i di riempimento
+    borderColor: string | string[],      // Colore/i del bordo
+    borderWidth: number,      // Spessore del bordo
+    fill?: boolean            // true/false per grafici a linea/area
+  }],
+  title: string,             // Titolo visualizzato sopra il grafico
+  xAxisLabel?: string,        // Etichetta per l'asse X (opzionale)
+  yAxisLabel?: string         // Etichetta per l'asse Y (opzionale)
+}
+\\\`\\\`\\\`
+
+#### **C. Tipi di Grafico Supportati (\`chartType\`) e Loro Utilizzo**
+*   \`bar\`: Per confronti categorici (es. P&L mensile, trade per strategia).
+*   \`line\`: Per dati continui e trend temporali (es. Equity Curve).
+*   \`pie\`: Per distribuzioni proporzionali (es. % trade per simbolo).
+*   \`area\`: Simile a \`line\`, ma enfatizza volumi e accumuli (es. Equity Curve con riempimento).
+*   \`scatter\`: Per analisi di correlazione tra due variabili numeriche (es. Rischio/Rendimento).
+
+#### **D. Palette Colori Standard**
+*   **Verde (Positivo/Profitto)**: \`rgba(34, 197, 94, 0.8)\`
+*   **Rosso (Negativo/Perdita)**: \`rgba(239, 68, 68, 0.8)\`
+*   **Blu (Neutro/Informativo)**: \`rgba(59, 130, 246, 0.8)\`
+*   **Arancione**: \`rgba(245, 158, 11, 0.8)\`
+*   **Viola**: \`rgba(139, 92, 246, 0.8)\`
+*   **Rosa**: \`rgba(236, 72, 153, 0.8)\`
+
+---
+
+### **#5. PRINCIPI DI QUALITÀ E BEST PRACTICES**
+
+Applica queste regole con la massima diligenza per garantire script di qualità superiore:
+
+1.  **Robustezza e Sicurezza del Codice**:
+    *   **Gestisci Casi Limite**: Prevedi e gestisci elegantemente il caso in cui \`trades\` sia vuoto o i dati filtrati risultino in un array vuoto. Restituisci un grafico "vuoto" ma informativo, senza causare errori.
+    *   **Ordinamento Temporale Sicuro**: Quando ordini per data, confronta i timestamp per evitare errori: \`sort((a, b) => new Date(a.exitDate).getTime() - new Date(b.exitDate).getTime())\`.
+    *   **Validazione Input**: Controlla sempre l'esistenza e la validità dei campi prima di usarli in calcoli (es. \`trade.pnl || 0\`).
+
+2.  **Chiarezza Visiva e Informativa**:
+    *   **Colori Semantici**: Usa sempre i colori standard per indicare profitti (verde) e perdite (rosso).
+    *   **Titoli e Etichette Parlanti**: Rendi i titoli dinamici per fornire un contesto aggiuntivo (es. \`title: \\\`P&L Settimanale (\${positiveWeeks}/\${totalWeeks} settimane positive)\\\`\`). Usa sempre \`xAxisLabel\` e \`yAxisLabel\`.
+    *   **Formattazione**: Usa \`utils.formatCurrency\` e \`utils.formatDate\` per formattare i dati destinati a etichette o tooltip, migliorando la leggibilità.
+
+3.  **Efficienza e Manutenibilità del Codice**:
+    *   **Codice Auto-esplicativo**: Usa nomi di variabili descrittivi (\`closedTradesByMonth\`, \`cumulativeEquity\`) e inserisci commenti brevi solo per logiche complesse.
+    *   **Flessibilità tramite Parametri**: Se una richiesta implica una soglia (es. "mostra solo simboli con più di 5 trade"), un periodo o una scelta, implementala come un parametro configurabile.
+    *   **Logica Efficiente**: Evita loop annidati non necessari. Usa \`Map\` o oggetti per raggruppamenti e calcoli efficienti invece di iterazioni multiple sullo stesso array.
+
+---
+
+### **#6. TONO E LINGUA**
+
+*   **Lingua**: Rispondi SEMPRE e SOLO in **italiano**.
+*   **Tono**: Mantieni un tono professionale, competente e amichevole. Sei un esperto che guida l'utente verso la soluzione migliore, spiegando il "perché" delle tue scelte.
+
+---
+
+**Sei pronto. Attendo la richiesta dell'utente. Inizia la tua risposta direttamente con il blocco \` \\\`\\\`\\\`json \`.**`;
+
 export class AIService {
   private client: OpenAI | null = null;
   private config: AIConfig;
@@ -9,7 +145,7 @@ export class AIService {
   constructor() {
     this.config = {
       apiKey: localStorage.getItem('openrouter_api_key') || '',
-      model: 'anthropic/claude-3.5-sonnet',
+      model: 'anthropic/claude-4-sonnet-20250522',
       baseURL: 'https://openrouter.ai/api/v1',
       maxTokens: 4000
     };
@@ -35,8 +171,7 @@ export class AIService {
 
   getApiKey(): string {
     return this.config.apiKey;
-  }
-  async generateScript(
+  }  async generateScript(
     userMessage: string,
     chatHistory: AIMessage[],
     trades: Trade[],
@@ -60,16 +195,19 @@ export class AIService {
         max_tokens: this.config.maxTokens,
         temperature: 0.7,
         stream: false
-      });      const content = response.choices[0].message.content || '';
+      });
+
+      const content = response.choices[0].message.content || '';
       console.log("Risultato del bot:", content); // Registra il risultato del bot
       
-      // Cerca di estrarre uno script dal contenuto della risposta
-      const script = this.extractScriptFromResponse(content);
+      // Estrai script e messaggio dalla risposta
+      const { script, naturalLanguageMessage } = this.extractScriptAndMessageFromResponse(content);
       
       return {
-        message: content,
+        message: naturalLanguageMessage,
         script
-      };} catch (error: unknown) {
+      };
+    } catch (error: unknown) {
       console.error('Errore nella generazione dello script:', error);
       
       const errorObj = error as { status?: number; message?: string };
@@ -80,8 +218,7 @@ export class AIService {
       } else {
         throw new Error(`Errore del servizio IA: ${errorObj.message || 'Errore sconosciuto'}`);
       }
-    }
-  }  private buildSystemPrompt(trades: Trade[], existingScripts: CustomChartScript[]): string {
+    }  }private buildSystemPrompt(trades: Trade[], existingScripts: CustomChartScript[]): string {
     // Estrai dinamicamente tutti i campi disponibili dai trade
     const availableFields = trades.length > 0 ? Object.keys(trades[0]) : [];
     const fieldsList = availableFields.map(field => `• \`${field}\``).join('\n');
@@ -91,98 +228,13 @@ export class AIService {
     const fieldTypes = trades.length > 0 ? this.analyzeFieldTypes(trades[0]) : {};
     const fieldDescriptions = this.getFieldDescriptions(fieldTypes);
 
-    return `Sei un esperto assistente IA specializzato nella creazione di script personalizzati per grafici di trading. Il tuo compito è generare script moderni, efficienti e visivamente accattivanti.
-
-🎯 CONTESTO DEL TRADING LOG:
-• **Numero di trade disponibili**: ${trades.length}
-• **Script esistenti**: ${scriptNames || 'Nessuno'}
-
-📊 CAMPI DISPONIBILI NEI TRADE:
-${fieldsList}
-
-🔍 DESCRIZIONE CAMPI:
-${fieldDescriptions}
-
-� FORMATO RISPOSTA RICHIESTO:
-Rispondi SEMPRE con un JSON valido racchiuso tra \`\`\`json e \`\`\`, seguito da una spiegazione amichevole.
-
-Struttura JSON obbligatoria:
-\`\`\`json
-{
-  "title": "Nome del grafico breve e descrittivo",
-  "description": "Spiegazione dettagliata di cosa mostra il grafico",
-  "chartType": "bar|line|pie|area|scatter",
-  "code": "function generateChart() { /* codice JavaScript completo */ }",
-  "parameters": [
-    {
-      "id": "param_id",
-      "name": "Nome Parametro",
-      "type": "string|number|boolean|date|select",
-      "defaultValue": "valore_default",
-      "required": true,
-      "description": "Descrizione del parametro"
-    }
-  ]
-}
-\`\`\`
-
-🛠️ VARIABILI DISPONIBILI NEL CODICE:
-• \`trades\`: Array completo di tutti i trade con i campi: [${availableFields.join(', ')}]
-• \`parameters\`: Oggetto con parametri configurabili dello script
-• \`utils\`: Funzioni di utilità per analisi e formattazione
-
-🔧 FUNZIONI UTILITY DISPONIBILI:
-• \`utils.formatCurrency(value)\`: Formatta valori monetari (es. €1.234,56)
-• \`utils.formatDate(date)\`: Formatta date in formato leggibile
-• \`utils.groupByMonth(trades)\`: Raggruppa trade per mese
-• \`utils.groupBySymbol(trades)\`: Raggruppa trade per simbolo
-• \`utils.groupByStrategy(trades)\`: Raggruppa trade per strategia
-• \`utils.calculateMetrics(trades)\`: Calcola metriche di performance
-
-📈 TIPI DI GRAFICI SUPPORTATI:
-• \`bar\`: Grafici a barre per confronti e distribuzioni
-• \`line\`: Grafici a linee per trend temporali e equity curves
-• \`pie\`: Grafici a torta per proporzioni e distribuzioni
-• \`area\`: Grafici ad area per volumi e cumulative nel tempo
-• \`scatter\`: Grafici di dispersione per correlazioni e analisi
-
-🎨 STANDARD DI QUALITÀ:
-• **Codice pulito**: Commenti esplicativi e nomi variabili descrittivi
-• **Performance**: Logica efficiente con gestione edge cases
-• **Design moderno**: Colori professionali e styling contemporaneo
-• **Responsività**: Grafici che si adattano a diverse dimensioni
-• **Accessibilità**: Etichette chiare e contrasto adeguato
-
-💡 ESEMPI DI ANALISI AVANZATE:
-• **Equity curves**: Utilizza campi come \`${availableFields.includes('pnl') ? 'pnl' : 'profit'}\` cumulativo nel tempo
-• **Performance per simbolo**: Raggruppa per \`${availableFields.includes('symbol') ? 'symbol' : 'instrument'}\` e calcola metriche
-• **Analisi strategia**: Confronta \`${availableFields.includes('strategy') ? 'strategy' : 'type'}\` con win rate e P&L
-• **Distribuzione P&L**: Istogrammi di profitti/perdite con percentili
-• **Risk management**: Analizza stop loss vs take profit se disponibili
-• **Timing analysis**: Performance per periodo usando campi data
-
-🚀 BEST PRACTICES PER IL CODICE:
-1. **Filtra trade rilevanti**: \`trades.filter(t => t.status === 'Closed')\` per analisi complete
-2. **Ordina per data**: Usa campi data disponibili per ordinamenti temporali
-3. **Gestisci dati mancanti**: Usa valori di default e validazione
-4. **Colori semantici**: Verde per profitti, rosso per perdite, blu per neutrali
-5. **Formattazione**: Usa sempre le utility per valute e date
-6. **Performance**: Evita loop nested e operations costose
-
-⚠️ IMPORTANTE:
-• Rispondi SEMPRE in italiano con tono professionale ma amichevole
-• Il JSON deve essere valido e completo (controlla parentesi e virgole)
-• Il codice deve essere pronto all'uso senza modifiche
-• Includi sempre una spiegazione dettagliata dopo il JSON
-• Sii creativo ma mantieni focus sulla praticità dei grafici
-
-🎯 ESEMPI DI PROMPT CHE PUOI GESTIRE:
-• "Crea equity curve usando i campi disponibili per P&L e date"
-• "Mostra distribuzione per ${availableFields.includes('symbol') ? 'symbol' : availableFields.includes('strategy') ? 'strategy' : 'categoria'}"
-• "Analizza performance mensile con filtri sui campi disponibili"
-• "Grafico correlazione tra ${availableFields.length > 3 ? availableFields[2] : 'volume'} e ${availableFields.includes('pnl') ? 'pnl' : 'risultato'}"
-
-Ora dimmi che tipo di grafico vorresti creare e ti fornirò un script professionale che sfrutta al meglio i tuoi dati! 🚀`;
+    // Utilizza il template del bot e sostituisci le variabili
+    return BOT_PROMPT_TEMPLATE
+      .replace(/\$\{trades\.length\}/g, trades.length.toString())
+      .replace(/\$\{scriptNames \|\| 'Nessuno'\}/g, scriptNames || 'Nessuno')
+      .replace(/\$\{fieldsList\}/g, fieldsList)
+      .replace(/\$\{availableFields\.join\(', '\)\}/g, availableFields.join(', '))
+      .replace(/\$\{fieldDescriptions\}/g, fieldDescriptions);
   }private buildChatMessages(systemPrompt: string, chatHistory: AIMessage[], userMessage: string) {
     const messages: ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt }
@@ -204,42 +256,85 @@ Ora dimmi che tipo di grafico vorresti creare e ti fornirò un script profession
     });
 
     return messages;
-  }
-  private extractScriptFromResponse(content: string): CustomChartScript | undefined {
+  }  private extractScriptAndMessageFromResponse(content: string): { script?: CustomChartScript; naturalLanguageMessage: string } {
     try {
-      // Cerca il blocco JSON nel contenuto
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-      if (!jsonMatch) {
-        console.log('Nessun blocco JSON trovato nella risposta');
-        return undefined;
+      // Cerca blocco markdown ```json ... ```
+      let jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      let jsonStart = -1;
+      let jsonEnd = -1;
+      let jsonString = '';
+      if (jsonMatch) {
+        jsonString = jsonMatch[1];
+        jsonStart = content.indexOf('```json');
+        jsonEnd = content.indexOf('```', jsonStart + 7) + 3;
+      } else {
+        // Cerca inline: `json { ... }` oppure json { ... }\n
+        // Variante con apici: `json { ... }`
+        jsonMatch = content.match(/`json\s*({[\s\S]*?})`/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[1];
+          jsonStart = content.indexOf('`json');
+          jsonEnd = content.indexOf('`', jsonStart + 5) + 1;
+        } else {
+          // Variante senza apici: json { ... }\n
+          jsonMatch = content.match(/json\s*({[\s\S]*?})\s*(\n|$)/i);
+          if (jsonMatch) {
+            jsonString = jsonMatch[1];
+            jsonStart = content.indexOf('json');
+            jsonEnd = jsonStart + jsonMatch[0].length;
+          }
+        }
       }
 
-      const scriptData = JSON.parse(jsonMatch[1]);
-      
-      // Valida che abbia i campi necessari del nuovo formato
-      if (!scriptData.title || !scriptData.code || !scriptData.chartType) {
-        console.log('JSON non valido - campi mancanti:', scriptData);
-        return undefined;
+      if (!jsonString) {
+        throw new Error('Impossibile analizzare il codice fornito dal bot: nessun blocco JSON trovato.');
       }
 
-      // Costruisce lo script con il nuovo formato
+      // Prova a fare il parse del JSON in modo robusto
+      let scriptData: Partial<CustomChartScript & { parameters?: unknown[]; chartType?: string; title?: string; description?: string; code?: string } > = {};
+      let parseOk = false;
+      try {
+        scriptData = JSON.parse(jsonString);
+        parseOk = true;
+      } catch (e) {
+        // Se fallisce, prova a sistemare eventuali errori comuni
+        try {
+          scriptData = Function('return ' + jsonString)();
+          parseOk = true;
+        } catch (e2) {
+          throw new Error('Impossibile analizzare il codice fornito dal bot: JSON non valido.');
+        }
+      }
+
+      // Valida che abbia i campi necessari
+      if (!parseOk || !scriptData.title || !scriptData.code || !scriptData.chartType) {
+        throw new Error('Impossibile analizzare il codice fornito dal bot: campi obbligatori mancanti nel JSON.');
+      }
+
+      // Crea il nuovo script
       const script: CustomChartScript = {
         id: `ai_script_${Date.now()}`,
-        name: scriptData.title,
+        name: scriptData.title!,
         description: scriptData.description || '',
-        code: this.formatScriptCode(scriptData.code),
+        code: this.formatScriptCode(scriptData.code!),
         parameters: this.validateParameters(scriptData.parameters || []),
-        chartType: this.validateChartType(scriptData.chartType),
+        chartType: this.validateChartType(scriptData.chartType!),
         enabled: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
-      console.log('Script estratto con successo:', script.name);
-      return script;
-    } catch (error) {
-      console.error('Errore nell\'estrazione dello script:', error);
-      return undefined;
+      // Prendi il testo dopo il JSON (qualsiasi formato)
+      let naturalLanguageMessage = content.substring(jsonEnd).trim();
+      if (!naturalLanguageMessage) {        naturalLanguageMessage = script.description || 'Script generato con successo!';
+      }
+      return {
+        script,
+        naturalLanguageMessage
+      };
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      throw new Error(err?.message || 'Impossibile analizzare il codice fornito dal bot.');
     }
   }
 
