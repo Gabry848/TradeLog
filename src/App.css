@@ -7,6 +7,42 @@
 @import './styles/settings.css';
 @import './styles/fields.css';
 
+/* Global Scrollbar Styles */
+/* Per browser Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e2025;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 4px;
+  border: 1px solid #2a2d35;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5a6578;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #6a7588;
+}
+
+::-webkit-scrollbar-corner {
+  background: #1e2025;
+}
+
+/* Per Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4a5568 #1e2025;
+}
+
 /* Global App Styles */
 .app {
   height: 100vh;
