@@ -26,6 +26,8 @@ import {
 
 // Hooks
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useGlobalFolder } from "./hooks/useFolderPicker";
+import { usePersistentStorage } from "./hooks/usePersistentStorage";
 
 // Utils
 import { exportToCSV, importFromCSV, loadTradesFromFile, saveTradesDirectly } from "./utils/fileUtils";
@@ -41,12 +43,33 @@ function App() {  // State management
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
+    // Hooks per gestione globale cartella
+  const { globalFolder, updateGlobalFolder } = useGlobalFolder();
     // Local storage hooks - solo per configurazioni, non per i trade
   const [userTrades, setUserTrades] = useState<Trade[]>([]);
-  const [tradeFields, setTradeFields] = useLocalStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
-  const [customScripts, setCustomScripts] = useLocalStorage<CustomChartScript[]>('tradelog_custom_scripts', getDefaultChartScripts());
-  const [filePath, setFilePath] = useLocalStorage<string>("tradelog_filepath", "tradelog.csv");
+  const tradeFieldsResult = usePersistentStorage<TradeField[]>('tradelog_fields', defaultTradeFields);
+  const customScriptsResult = usePersistentStorage<CustomChartScript[]>('tradelog_custom_scripts', getDefaultChartScripts());
+  const filePathResult = usePersistentStorage<string>("tradelog_filepath", "tradelog.csv");
+  
+  // Usa il vecchio localStorage per destinationPath dato che ora è gestito dalla cartella globale
   const [destinationPath, setDestinationPath] = useLocalStorage<string>("tradelog_destination_path", "");
+  // Estrai i valori dai risultati
+  const tradeFields = tradeFieldsResult.value;
+  const customScripts = customScriptsResult.value;
+  const filePath = filePathResult.value;
+  
+  // Funzioni wrapper per gestire le chiamate async
+  const setTradeFields = async (fields: TradeField[] | ((prev: TradeField[]) => TradeField[])) => {
+    await tradeFieldsResult.setValue(fields);
+  };
+  
+  const setCustomScripts = async (scripts: CustomChartScript[] | ((prev: CustomChartScript[]) => CustomChartScript[])) => {
+    await customScriptsResult.setValue(scripts);
+  };
+  
+  const setFilePath = async (path: string | ((prev: string) => string)) => {
+    await filePathResult.setValue(path);
+  };
 
   // Filters and editing stated
   const [filters, setFilters] = useState<FilterState>({
@@ -335,7 +358,7 @@ function App() {  // State management
             destinationPath={destinationPath}
             tradeFields={tradeFields}
             onFilePathChange={setFilePath}
-            onDestinationPathChange={setDestinationPath}
+            onDestinationPathChange={handleDestinationPathChange}
             onTradeFieldsUpdate={setTradeFields}
           />
         );
@@ -357,7 +380,20 @@ function App() {  // State management
         console.error('Errore nel caricamento dei trade:', error);
       }
     };    loadTrades();
-  }, [filePath, destinationPath, tradeFields]);
+  }, [filePath, destinationPath, tradeFields]);  // Funzione wrapper per setDestinationPath che aggiorna anche la cartella globale
+  const handleDestinationPathChange = (path: string) => {
+    setDestinationPath(path);
+    updateGlobalFolder(path);
+  };
+
+  // Sincronizza la cartella globale con destinationPath
+  useEffect(() => {
+    if (globalFolder && globalFolder !== destinationPath) {
+      setDestinationPath(globalFolder);
+    } else if (!globalFolder && destinationPath) {
+      updateGlobalFolder(destinationPath);
+    }
+  }, [globalFolder, destinationPath, setDestinationPath, updateGlobalFolder]);
 
   // Salva automaticamente quando cambiano i trade (solo se non sono demo trade)
   useEffect(() => {

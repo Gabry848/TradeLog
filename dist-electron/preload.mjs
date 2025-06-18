@@ -23,5 +23,8 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
 electron.contextBridge.exposeInMainWorld("electronAPI", {
   selectFolder: () => electron.ipcRenderer.invoke("select-folder"),
   saveFile: (data, filePath) => electron.ipcRenderer.invoke("save-file", data, filePath),
-  readFile: (filePath) => electron.ipcRenderer.invoke("read-file", filePath)
+  readFile: (filePath) => electron.ipcRenderer.invoke("read-file", filePath),
+  // Nuove API per gestione settings
+  saveSettings: (settings) => electron.ipcRenderer.invoke("save-settings", settings),
+  loadSettings: () => electron.ipcRenderer.invoke("load-settings")
 });

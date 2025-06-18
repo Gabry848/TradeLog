@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface FolderPickerResult {
   selectFolder: () => Promise<string | null>;
@@ -6,7 +6,18 @@ interface FolderPickerResult {
   error: string | null;
 }
 
-export const useFolderPicker = (): FolderPickerResult => {
+interface GlobalFolderResult {
+  globalFolder: string;
+  updateGlobalFolder: (path: string) => Promise<void>;
+  clearGlobalFolder: () => Promise<void>;
+  isLoaded: boolean;
+}
+
+
+
+export const useFolderPicker = (
+  onFolderSelected?: (path: string) => void
+): FolderPickerResult => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,8 +31,28 @@ export const useFolderPicker = (): FolderPickerResult => {
         try {
           const result = await window.electronAPI.selectFolder();
           if (!result.canceled && result.filePaths.length > 0) {
+            const selectedPath = result.filePaths[0];
             setIsSelecting(false);
-            return result.filePaths[0];
+              // Salva la cartella globalmente
+            if (window.electronAPI && window.electronAPI.saveSettings && window.electronAPI.loadSettings) {
+              try {
+                const currentSettings = await window.electronAPI.loadSettings();
+                const newSettings = { ...currentSettings, globalFolder: selectedPath };
+                await window.electronAPI.saveSettings(newSettings);
+              } catch (error) {
+                console.warn('Errore nel salvataggio settings Electron, uso localStorage:', error);
+                localStorage.setItem('tradelog_global_folder', selectedPath);
+              }
+            } else {
+              localStorage.setItem('tradelog_global_folder', selectedPath);
+            }
+            
+            // Notifica il callback se fornito
+            if (onFolderSelected) {
+              onFolderSelected(selectedPath);
+            }
+            
+            return selectedPath;
           }
           setIsSelecting(false);
           return null;
@@ -35,6 +66,25 @@ export const useFolderPicker = (): FolderPickerResult => {
           const directoryHandle = await window.showDirectoryPicker();
           const folderPath = directoryHandle.name;
           setIsSelecting(false);
+            // Salva la cartella globalmente
+          if (window.electronAPI && window.electronAPI.saveSettings && window.electronAPI.loadSettings) {
+            try {
+              const currentSettings = await window.electronAPI.loadSettings();
+              const newSettings = { ...currentSettings, globalFolder: folderPath };
+              await window.electronAPI.saveSettings(newSettings);
+            } catch (error) {
+              console.warn('Errore nel salvataggio settings Electron, uso localStorage:', error);
+              localStorage.setItem('tradelog_global_folder', folderPath);
+            }
+          } else {
+            localStorage.setItem('tradelog_global_folder', folderPath);
+          }
+          
+          // Notifica il callback se fornito
+          if (onFolderSelected) {
+            onFolderSelected(folderPath);
+          }
+          
           return folderPath;
         } catch (webError) {
           if ((webError as Error).name === 'AbortError') {
@@ -57,10 +107,87 @@ export const useFolderPicker = (): FolderPickerResult => {
       setIsSelecting(false);
       return null;
     }
-  }, []);
+  }, [onFolderSelected]);
+
   return {
     selectFolder,
     isSelecting,
     error
+  };
+};
+
+// Hook per accedere alla cartella globale
+export const useGlobalFolder = (): GlobalFolderResult => {
+  const [globalFolder, setGlobalFolder] = useState<string>('');
+  const [isLoaded, setIsLoaded] = useState(false);
+  // Carica le impostazioni all'avvio
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {        if (window.electronAPI && window.electronAPI.loadSettings) {
+          // Usa i settings persistenti di Electron
+          const settings = await window.electronAPI.loadSettings();
+          const savedFolder = (settings.globalFolder as string) || '';
+          setGlobalFolder(savedFolder);
+        } else {
+          // Fallback al localStorage per il browser
+          const savedFolder = localStorage.getItem('tradelog_global_folder') || '';
+          setGlobalFolder(savedFolder);
+        }
+      } catch (error) {
+        console.warn('Errore nel caricamento settings, uso localStorage:', error);
+        const savedFolder = localStorage.getItem('tradelog_global_folder') || '';
+        setGlobalFolder(savedFolder);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  const updateGlobalFolder = async (path: string) => {
+    setGlobalFolder(path);
+    
+    try {
+      if (window.electronAPI && window.electronAPI.saveSettings && window.electronAPI.loadSettings) {
+        // Salva nei settings persistenti di Electron
+        const currentSettings = await window.electronAPI.loadSettings();
+        const newSettings = { ...currentSettings, globalFolder: path };
+        await window.electronAPI.saveSettings(newSettings);
+      } else {
+        // Fallback al localStorage per il browser
+        localStorage.setItem('tradelog_global_folder', path);
+      }
+    } catch (error) {
+      console.warn('Errore nel salvataggio settings, uso localStorage:', error);
+      localStorage.setItem('tradelog_global_folder', path);
+    }
+  };
+
+  const clearGlobalFolder = async () => {
+    setGlobalFolder('');
+    
+    try {
+      if (window.electronAPI && window.electronAPI.saveSettings && window.electronAPI.loadSettings) {
+        // Rimuovi dai settings persistenti di Electron
+        const currentSettings = await window.electronAPI.loadSettings();
+        const newSettings = { ...currentSettings };
+        delete newSettings.globalFolder;
+        await window.electronAPI.saveSettings(newSettings);
+      } else {
+        // Fallback al localStorage per il browser
+        localStorage.removeItem('tradelog_global_folder');
+      }
+    } catch (error) {
+      console.warn('Errore nella rimozione settings, uso localStorage:', error);
+      localStorage.removeItem('tradelog_global_folder');
+    }
+  };
+
+  return {
+    globalFolder,
+    updateGlobalFolder,
+    clearGlobalFolder,
+    isLoaded,
   };
 };

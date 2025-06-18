@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TradeField } from '../../types';
 import { defaultTradeFields } from '../../data/defaults';
-import { useFolderPicker } from '../../hooks/useFolderPicker';
+import { useFolderPicker, useGlobalFolder } from '../../hooks/useFolderPicker';
 import FieldsManager from './FieldsManager';
 
 interface SettingsPageProps {
   filePath: string;
   destinationPath: string;
   tradeFields: TradeField[];
-  onFilePathChange: (path: string) => void;
+  onFilePathChange: (path: string) => Promise<void>;
   onDestinationPathChange: (path: string) => void;
-  onTradeFieldsUpdate: (fields: TradeField[]) => void;
+  onTradeFieldsUpdate: (fields: TradeField[]) => Promise<void>;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -21,13 +21,33 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onDestinationPathChange,
   onTradeFieldsUpdate,
 }) => {
-  const { selectFolder, isSelecting, error } = useFolderPicker();
+  const { globalFolder, updateGlobalFolder } = useGlobalFolder();
+  const { selectFolder, isSelecting, error } = useFolderPicker(updateGlobalFolder);
+
+  // Sincronizza la cartella globale con il destinationPath quando cambia
+  useEffect(() => {
+    if (globalFolder && globalFolder !== destinationPath) {
+      onDestinationPathChange(globalFolder);
+    }
+  }, [globalFolder, destinationPath, onDestinationPathChange]);
+  // Se c'è una cartella globale salvata, utilizzala all'avvio
+  useEffect(() => {
+    if (globalFolder && !destinationPath) {
+      onDestinationPathChange(globalFolder);
+    }
+  }, [globalFolder, destinationPath, onDestinationPathChange]);
 
   const handleSelectFolder = async () => {
     const selectedPath = await selectFolder();
     if (selectedPath) {
-      onDestinationPathChange(selectedPath);
+      // Il callback updateGlobalFolder viene chiamato automaticamente dal hook
+      // e sincronizzerà il valore tramite useEffect
     }
+  };
+
+  const handleManualPathChange = (path: string) => {
+    onDestinationPathChange(path);
+    updateGlobalFolder(path);
   };const getFullFilePath = () => {
     if (!destinationPath) return filePath;
     const separator = destinationPath.includes("/") ? "/" : "\\";
@@ -42,17 +62,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* File Configuration Section */}
       <div className="settings-section">
         <h3>📁 Configurazione File di Salvataggio</h3>
-        <p>Imposta dove salvare le tue operazioni di trading.</p>        <div className="help-box">
-          <h4>💡 Come funziona:</h4>
-          <ul>
-            <li><strong>File Unico:</strong> Tutte le operazioni vengono salvate SOLO nel file specificato</li>
-            <li><strong>Auto-save:</strong> Ogni operazione viene salvata automaticamente nel file</li>
-            <li><strong>Import CSV:</strong> Importa operazioni da file esterni (sostituisce i dati attuali)</li>
-            <li><strong>Export CSV:</strong> Crea una copia del file in un'altra posizione</li>
-            <li><strong>Browser Web:</strong> Download nella cartella predefinita del browser</li>
-            <li><strong>App Electron:</strong> Salvataggio diretto nella cartella specificata dall'utente. La cartella selezionata viene memorizzata e utilizzata automaticamente ad ogni avvio dell'applicazione, garantendo che tutti i tuoi dati vengano sempre salvati nella stessa posizione.</li>
-          </ul>
-        </div>
+        <p>Imposta dove salvare le tue operazioni di trading.</p>        
 
         <div className="file-config-grid">
           <div className="form-group">
@@ -60,13 +70,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <input
               type="text"
               id="file-path"
-              value={filePath}
-              onChange={(e) => {
+              value={filePath}              onChange={async (e) => {
                 let newPath = e.target.value;
                 if (newPath && !newPath.toLowerCase().endsWith(".csv")) {
                   newPath = newPath.replace(/\.[^/.]+$/, "") + ".csv";
                 }
-                onFilePathChange(newPath);
+                await onFilePathChange(newPath);
               }}
               placeholder="es: le_mie_operazioni.csv"
               className="config-input"
@@ -76,15 +85,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
           <div className="form-group">
             <label htmlFor="destination-path">📂 Cartella di Destinazione</label>
-            <div className="destination-input-group">
-              <input
+            <div className="destination-input-group">              <input
                 type="text"
                 id="destination-path"
                 value={destinationPath}
-                onChange={(e) => onDestinationPathChange(e.target.value)}
+                onChange={(e) => handleManualPathChange(e.target.value)}
                 placeholder="es: C:\Users\Nome\Documents\Trading"
                 className="config-input"
-              />              <button
+              /><button
                 onClick={handleSelectFolder}
                 className="browse-btn"
                 type="button"
@@ -124,7 +132,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         
         <div className="fields-actions" style={{ marginBottom: '16px' }}>
           <button 
-            onClick={() => onTradeFieldsUpdate(defaultTradeFields)}
+            onClick={async () => await onTradeFieldsUpdate(defaultTradeFields)}
             className="reset-fields-btn"
             style={{
               backgroundColor: '#4CAF50',

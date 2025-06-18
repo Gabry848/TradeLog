@@ -5,7 +5,7 @@ import { addExampleFields } from '../../data/exampleFields';
 
 interface FieldsManagerProps {
   tradeFields: TradeField[];
-  onFieldsUpdate: (fields: TradeField[]) => void;
+  onFieldsUpdate: (fields: TradeField[]) => Promise<void>;
 }
 
 // Componente OptionsInput separato per evitare ricreazioni
@@ -97,7 +97,7 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
     );
   });
 
-  const handleAddField = () => {
+  const handleAddField = async () => {
     if (!newField.id || !newField.label) {
       alert('ID campo e Etichetta sono obbligatori');
       return;
@@ -118,10 +118,8 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
       formula: newField.type === 'calculated' ? newField.formula : undefined,
       dependencies: newField.type === 'calculated' ? newField.dependencies : undefined,
       defaultValue: newField.defaultValue
-    };
-
-    const updatedFields = [...tradeFields, fieldToAdd];
-    onFieldsUpdate(updatedFields);    setNewField({
+    };    const updatedFields = [...tradeFields, fieldToAdd];
+    await onFieldsUpdate(updatedFields);setNewField({
       id: '',
       label: '',
       type: 'text',
@@ -139,14 +137,13 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
   const handleEditField = (field: TradeField) => {
     setEditingField({ ...field });
   };
-
-  const handleUpdateField = () => {
+  const handleUpdateField = async () => {
     if (!editingField) return;
 
     const updatedFields = tradeFields.map(field =>
       field.id === editingField.id ? editingField : field
     );
-    onFieldsUpdate(updatedFields);
+    await onFieldsUpdate(updatedFields);
     setEditingField(null);
   };
   const handleDeleteField = (fieldId: string) => {
@@ -164,22 +161,21 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
       });
     }
   };
-
-  const confirmDeleteField = () => {
+  const confirmDeleteField = async () => {
     const updatedFields = tradeFields.filter(field => field.id !== deleteConfirmModal.fieldId);
-    onFieldsUpdate(updatedFields);
+    await onFieldsUpdate(updatedFields);
     setDeleteConfirmModal({ isOpen: false, fieldId: '', fieldLabel: '' });
   };
 
   const cancelDeleteField = () => {
     setDeleteConfirmModal({ isOpen: false, fieldId: '', fieldLabel: '' });
   };
-
-  const handleToggleField = (fieldId: string) => {
+  const handleToggleField = async (fieldId: string) => {
     const updatedFields = tradeFields.map(field =>
       field.id === fieldId ? { ...field, enabled: !field.enabled } : field
     );
-    onFieldsUpdate(updatedFields);  };
+    await onFieldsUpdate(updatedFields);
+  };
 
   const handleOptionsChange = React.useCallback((options: string[], isEditing = false) => {
     const optionsArray = options.filter(opt => opt.trim() !== '');
@@ -216,21 +212,19 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
               ⚡ Aggiungi Rapidi
             </button>
             {showQuickAddMenu && (
-              <div className="quick-add-menu">
-                <button
-                  onClick={() => {
+              <div className="quick-add-menu">                <button
+                  onClick={async () => {
                     const updatedFields = addExampleFields(tradeFields, 'calculated');
-                    onFieldsUpdate(updatedFields);
+                    await onFieldsUpdate(updatedFields);
                     setShowQuickAddMenu(false);
                   }}
                   className="quick-add-option"
                 >
                   🧮 Campi Calcolati Base
-                </button>
-                <button
-                  onClick={() => {
+                </button><button
+                  onClick={async () => {
                     const updatedFields = addExampleFields(tradeFields, 'portfolio');
-                    onFieldsUpdate(updatedFields);
+                    await onFieldsUpdate(updatedFields);
                     setShowQuickAddMenu(false);
                   }}
                   className="quick-add-option"
@@ -238,9 +232,9 @@ const FieldsManager: React.FC<FieldsManagerProps> = ({ tradeFields, onFieldsUpda
                   📊 Analisi Portafoglio
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const updatedFields = addExampleFields(tradeFields, 'risk');
-                    onFieldsUpdate(updatedFields);
+                    await onFieldsUpdate(updatedFields);
                     setShowQuickAddMenu(false);
                   }}
                   className="quick-add-option"

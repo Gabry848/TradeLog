@@ -28,6 +28,8 @@ interface Window {
     selectFolder: () => Promise<{ canceled: boolean; filePaths: string[] }>
     saveFile: (data: string, filePath: string) => Promise<void>
     readFile: (filePath: string) => Promise<string>
+    saveSettings: (settings: Record<string, unknown>) => Promise<{ success: boolean }>
+    loadSettings: () => Promise<Record<string, unknown>>
   }
   showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>
 }

@@ -26,5 +26,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 contextBridge.exposeInMainWorld('electronAPI', {
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   saveFile: (data: string, filePath: string) => ipcRenderer.invoke('save-file', data, filePath),
-  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
+  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),  // Nuove API per gestione settings
+  saveSettings: (settings: Record<string, unknown>) => ipcRenderer.invoke('save-settings', settings),
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
 })

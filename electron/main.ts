@@ -27,11 +27,18 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 
 function createWindow() {
+  // Correggi il path del preload per entrambi gli ambienti
+  const preloadPath = VITE_DEV_SERVER_URL 
+    ? path.join(__dirname, 'preload.mjs')
+    : path.join(__dirname, 'preload.js');
+
   win = new BrowserWindow({
     title: 'TradeLog - Trading Journal',
-    icon: path.join(__dirname + '/src/assets/TradeLog.png'),
+    icon: path.join(process.env.VITE_PUBLIC!, 'TradeLog.ico'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: preloadPath,
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   })
 
@@ -95,6 +102,64 @@ ipcMain.handle('read-file', async (_event, filePath: string) => {
     return data
   } catch (error) {
     console.error('Error reading file:', error)
+    throw error
+  }
+})
+
+// Gestori per i settings persistenti
+const getSettingsPath = () => {
+  const userDataPath = app.getPath('userData')
+  return path.join(userDataPath, 'tradelog-settings.json')
+}
+
+ipcMain.handle('save-settings', async (_event, settings: Record<string, unknown>) => {
+  try {
+    const settingsPath = getSettingsPath()
+    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8')
+    return { success: true }
+  } catch (error) {
+    console.error('Error saving settings:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('load-settings', async () => {
+  try {
+    const settingsPath = getSettingsPath()
+    const data = await fs.readFile(settingsPath, 'utf8')
+    
+    // Controlla se il file è vuoto
+    if (!data || data.trim() === '') {
+      console.log('Settings file is empty, returning default settings')
+      return {}
+    }
+    
+    try {
+      return JSON.parse(data)
+    } catch (parseError) {
+      console.error('Error parsing settings JSON:', parseError)
+      console.log('Corrupted settings file, returning default settings')
+      return {}
+    }
+  } catch (error) {
+    // Se il file non esiste, ritorna settings vuoti
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.log('Settings file does not exist, returning default settings')
+      return {}
+    }
+    console.error('Error loading settings:', error)
+    return {}
+  }
+})
+
+ipcMain.handle('reset-settings', async () => {
+  try {
+    const settingsPath = getSettingsPath()
+    await fs.writeFile(settingsPath, JSON.stringify({}, null, 2), 'utf8')
+    console.log('Settings file reset successfully')
+    return { success: true }
+  } catch (error) {
+    console.error('Error resetting settings:', error)
     throw error
   }
 })
