@@ -260,10 +260,44 @@
 .modal-content.field-modal {
   max-width: 1100px;
   width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .field-modal .modal-body {
   padding: 2.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Form container with scrolling */
+.field-modal .field-form {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for field modal */
+.field-modal .modal-body::-webkit-scrollbar,
+.field-modal .field-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.field-modal .modal-body::-webkit-scrollbar-track,
+.field-modal .field-form::-webkit-scrollbar-track {
+  background: #1a1d23;
+  border-radius: 3px;
+}
+
+.field-modal .modal-body::-webkit-scrollbar-thumb,
+.field-modal .field-form::-webkit-scrollbar-thumb {
+  background: #646cff;
+  border-radius: 3px;
+}
+
+.field-modal .modal-body::-webkit-scrollbar-thumb:hover,
+.field-modal .field-form::-webkit-scrollbar-thumb:hover {
+  background: #5a5fcf;
 }
 
 .field-modal .form-grid {
@@ -533,5 +567,16 @@
   .field-modal {
     max-width: 95vw !important;
     margin: 1rem;
+    max-height: 95vh;
+  }
+  
+  .field-modal .modal-body {
+    padding: 1.5rem;
+  }
+  
+  /* Scrollbar più sottile su mobile */
+  .field-modal .modal-body::-webkit-scrollbar,
+  .field-modal .field-form::-webkit-scrollbar {
+    width: 4px;
   }
 }
