@@ -17,11 +17,10 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
   const [description, setDescription] = useState(script?.description || '');
   const [chartType, setChartType] = useState<'line' | 'bar' | 'pie' | 'area' | 'scatter'>(script?.chartType || 'bar');
   const [code, setCode] = useState(script?.code || getDefaultScriptTemplate(chartType));
-  const [parameters, setParameters] = useState<ChartParameter[]>(script?.parameters || []);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [parameters, setParameters] = useState<ChartParameter[]>(script?.parameters || []);  const [errors, setErrors] = useState<string[]>([]);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [parameterErrors, setParameterErrors] = useState<Record<string, string>>({});
+  const [isCodeExpanded, setIsCodeExpanded] = useState(false);
 
   useEffect(() => {
     if (!script) {
@@ -261,9 +260,9 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
     setParameters(generatedScript.parameters);
     setIsAIChatOpen(false);
   };
-
   return (
-    <div className="chart-script-editor">      <div className="script-editor-header">
+    <div className="chart-script-editor">
+      <div className="script-editor-header">
         <h3>{script ? 'Modifica Script' : 'Nuovo Script'}</h3>
         <div className="script-editor-actions">
           <button 
@@ -461,30 +460,21 @@ const ChartScriptEditor: React.FC<ChartScriptEditorProps> = ({ script, onSave, o
             );
           })}
         </div>        <div className="script-code">
-          <h4>Codice Script</h4>
-          <div className="code-editor">
-            <div className="code-editor-header">
-              <button
-                type="button"
-                onClick={() => setIsDarkTheme(!isDarkTheme)}
-                className="toggle-theme-btn"
-                style={{
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  backgroundColor: isDarkTheme ? '#424242' : '#e0e0e0',
-                  color: isDarkTheme ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginBottom: '8px'
-                }}
-              >
-                {isDarkTheme ? '☀️ Tema Chiaro' : '🌙 Tema Scuro'}
-              </button>
-            </div>            <Editor
-              height="400px"
+          <div className="code-header">
+            <h4>Codice Script</h4>
+            <button 
+              onClick={() => setIsCodeExpanded(!isCodeExpanded)}
+              className="btn-secondary btn-small"
+              title={isCodeExpanded ? "Riduci editor" : "Espandi editor"}
+            >
+              {isCodeExpanded ? "📉 Riduci" : "📈 Espandi"}            </button>
+          </div>
+          
+          <div className="code-editor" style={{ marginTop: '15px' }}>
+            <Editor
+              height={isCodeExpanded ? "800px" : "400px"}
               defaultLanguage="javascript"
-              theme={isDarkTheme ? "vs-dark" : "light"}
+              theme="vs-dark"
               value={code || `// 🚀 Benvenuto nell'editor di script personalizzati!
 // Utilizza le variabili disponibili per creare grafici dinamici:
 //

@@ -24,9 +24,23 @@ body {
   background-color: #2a2d35;
 }
 
+/* Assicura che il body e root permettano scroll quando necessario */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 #root {
   width: 100%;
+  overflow-y: auto;
   min-height: 100vh;
+  height: auto;
+}
+
+/* Garantisce che le pagine con contenuto lungo siano scrollabili */
+.page-container, .modal-content {
+  max-height: none;
+  overflow-y: visible;
 }
 
 h1, h2, h3, h4, h5, h6 {
