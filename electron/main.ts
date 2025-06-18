@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -27,10 +28,24 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 
 function createWindow() {
-  // Correggi il path del preload per entrambi gli ambienti
-  const preloadPath = VITE_DEV_SERVER_URL 
-    ? path.join(__dirname, 'preload.mjs')
-    : path.join(__dirname, 'preload.js');
+  // Gestione corretta del path preload per sviluppo e produzione
+  let preloadPath: string;
+  
+  if (VITE_DEV_SERVER_URL) {
+    // Modalità sviluppo - usa il file preload.mjs
+    preloadPath = path.join(__dirname, 'preload.mjs');
+  } else {
+    // Modalità produzione - controlla quale file esiste
+    const preloadMjs = path.join(__dirname, 'preload.mjs');
+    const preloadJs = path.join(__dirname, 'preload.js');
+    
+    // Usa il file che effettivamente esiste
+    if (existsSync(preloadMjs)) {
+      preloadPath = preloadMjs;
+    } else {
+      preloadPath = preloadJs;
+    }
+  }
 
   win = new BrowserWindow({
     title: 'TradeLog - Trading Journal',
