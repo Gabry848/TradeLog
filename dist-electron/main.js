@@ -1,70 +1,49 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import fs from "node:fs/promises";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname, "..");
-const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let win;
-function createWindow() {
-  win = new BrowserWindow({
+import { app as n, BrowserWindow as d, ipcMain as a, dialog as m } from "electron";
+import { fileURLToPath as _ } from "node:url";
+import r from "node:path";
+import p from "node:fs/promises";
+const i = r.dirname(_(import.meta.url));
+process.env.APP_ROOT = r.join(i, "..");
+const s = process.env.VITE_DEV_SERVER_URL, T = r.join(process.env.APP_ROOT, "dist-electron"), f = r.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = s ? r.join(process.env.APP_ROOT, "public") : f;
+let e;
+function w() {
+  e = new d({
     title: "TradeLog - Trading Journal",
-    icon: path.join(__dirname + "/src/assets/TradeLog.png"),
+    icon: r.join(i + "/src/assets/TradeLog.png"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs")
+      preload: r.join(i, "preload.mjs")
     }
-  });
-  win.setMenuBarVisibility(false);
-  win.webContents.on("did-finish-load", () => {
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
-  }
+  }), e.setMenuBarVisibility(!1), e.webContents.on("did-finish-load", () => {
+    e == null || e.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), s ? e.loadURL(s) : e.loadFile(r.join(f, "index.html"));
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+n.on("window-all-closed", () => {
+  process.platform !== "darwin" && (n.quit(), e = null);
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+n.on("activate", () => {
+  d.getAllWindows().length === 0 && w();
 });
-app.whenReady().then(createWindow);
-ipcMain.handle("select-folder", async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ["openDirectory"]
-  });
-  return result;
-});
-ipcMain.handle("save-file", async (_event, data, filePath) => {
+n.whenReady().then(w);
+a.handle("select-folder", async () => await m.showOpenDialog({
+  properties: ["openDirectory"]
+}));
+a.handle("save-file", async (l, t, o) => {
   try {
-    await fs.writeFile(filePath, data, "utf8");
-    return { success: true };
-  } catch (error) {
-    console.error("Error saving file:", error);
-    throw error;
+    return await p.writeFile(o, t, "utf8"), { success: !0 };
+  } catch (c) {
+    throw console.error("Error saving file:", c), c;
   }
 });
-ipcMain.handle("read-file", async (_event, filePath) => {
+a.handle("read-file", async (l, t) => {
   try {
-    const data = await fs.readFile(filePath, "utf8");
-    return data;
-  } catch (error) {
-    console.error("Error reading file:", error);
-    throw error;
+    return await p.readFile(t, "utf8");
+  } catch (o) {
+    throw console.error("Error reading file:", o), o;
   }
 });
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  T as MAIN_DIST,
+  f as RENDERER_DIST,
+  s as VITE_DEV_SERVER_URL
 };

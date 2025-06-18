@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import "./App_NEW.css";
+import "./App.css";
 import "./styles/custom-charts.css";
 
 // Components

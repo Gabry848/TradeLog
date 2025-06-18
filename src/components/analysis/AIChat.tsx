@@ -46,11 +46,11 @@ interface AIChatProps {
 
 const AIChat: React.FC<AIChatProps> = ({ 
   isOpen, 
-  onToggle,   onScriptGenerated, 
+  onToggle,
+  onScriptGenerated, 
   onScriptUpdated,
   trades, 
-  existingScripts,
-  currentScript
+  existingScripts
 }) => {const [messages, setMessages] = useState<AIMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -269,96 +269,7 @@ ${script.parameters.length > 0 ?
       content: modeMessage,
       timestamp: new Date().toISOString()
     };
-    
-    setMessages(prev => [...prev, selectionMessage]);
-  };
-  // Funzione per cambiare modalità di lavoro
-  const handleModeChange = (newMode: 'create' | 'modify' | 'explain') => {
-    setEditMode(newMode);
-    setSelectedScript(null);
-    
-    let modeMessage = '';
-    if (newMode === 'create') {
-      modeMessage = `🆕 **Modalità Creazione attivata**
-
-Descrivi il grafico che vuoi creare e genererò un nuovo script per te!`;
-    } else if (newMode === 'modify') {
-      // Se c'è un currentScript, usalo automaticamente
-      if (currentScript) {
-        setSelectedScript(currentScript);
-        modeMessage = `🔧 **Modalità Modifica attivata per "${currentScript.name}"**
-
-**Tipo:** ${currentScript.chartType.toUpperCase()}
-**Descrizione:** ${currentScript.description}
-
-Dimmi come vuoi modificarlo! Esempi:
-• "Aggiungi una media mobile"
-• "Cambia i colori del grafico"  
-• "Aggiungi un filtro per data"
-• "Modifica la legenda"`;
-      } else {
-        modeMessage = `🔧 **Modalità Modifica attivata**
-
-Seleziona uno script esistente per modificarlo. Posso:
-• Aggiungere nuove funzionalità
-• Modificare i colori e lo stile
-• Cambiare il tipo di grafico
-• Ottimizzare le performance
-• Aggiungere parametri configurabili`;
-        
-        if (existingScripts.length === 0) {
-          modeMessage += '\n\n⚠️ **Nessuno script disponibile per la modifica.** Crea prima alcuni script!';
-        } else {
-          setShowScriptSelector(true);
-        }
-      }
-    } else if (newMode === 'explain') {
-      // Se c'è un currentScript, usalo automaticamente
-      if (currentScript) {
-        setSelectedScript(currentScript);
-        modeMessage = `📖 **Spiegazione dello script:** "${currentScript.name}"
-
-**Tipo di grafico:** ${currentScript.chartType.toUpperCase()}
-**Descrizione:** ${currentScript.description}
-
-🔍 **Analisi del codice:**
-
-**Cosa fa questo script:**
-Questo script genera un grafico ${currentScript.chartType} che ${currentScript.description.toLowerCase()}
-
-**Funzionalità principali:**
-${currentScript.parameters.length > 0 ? 
-  `• **Parametri configurabili:** ${currentScript.parameters.map(p => p.name).join(', ')}` : 
-  '• Nessun parametro configurabile'}
-• **Elaborazione dati:** Analizza ${currentScript.code.includes('trades.filter') ? 'con filtri sui trade' : 'tutti i trade disponibili'}
-• **Visualizzazione:** ${currentScript.code.includes('Chart.js') ? 'Utilizza Chart.js per il rendering' : 'Rendering personalizzato'}
-
-**💡 Vuoi che analizzi una parte specifica del codice o che spieghi come modificarlo?**`;
-      } else {
-        modeMessage = `📖 **Modalità Spiegazione attivata**
-
-Seleziona uno script per ricevere una spiegazione dettagliata del suo funzionamento, incluso:
-• Come funziona il codice
-• Cosa fanno i parametri
-• Come modificarlo
-• Suggerimenti per miglioramenti`;
-        
-        if (existingScripts.length === 0) {
-          modeMessage += '\n\n⚠️ **Nessuno script disponibile per la spiegazione.** Crea prima alcuni script!';
-        } else {
-          setShowScriptSelector(true);
-        }
-      }
-    }
-
-    const modeChangeMessage: AIMessage = {
-      id: `msg_${Date.now()}`,
-      role: 'assistant', 
-      content: modeMessage,
-      timestamp: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, modeChangeMessage]);
+      setMessages(prev => [...prev, selectionMessage]);
   };
 
   const handleConfirmScript = () => {
