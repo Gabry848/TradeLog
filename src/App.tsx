@@ -36,8 +36,7 @@ import { calculateAllFields } from "./utils/calculatedFields";
 // Default configurations
 import { defaultTradeFields } from "./data/defaults";
 
-function App() {
-  // State management
+function App() {  // State management
   const [activeTab, setActiveTab] = useState<ActiveTab>("Dashboard");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -98,7 +97,6 @@ function App() {
       return 0;
     });
   }, [allTrades, filters, sortField, sortDirection]);
-
   // Event handlers
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -106,6 +104,23 @@ function App() {
     } else {
       setSortField(field);
       setSortDirection("desc");
+    }
+  };  // Funzione per ricaricare i trade dal file
+  const reloadTrades = async () => {
+    try {
+      const loadedTrades = await loadTradesFromFile(filePath, destinationPath, tradeFields);
+      setUserTrades(loadedTrades);
+    } catch (error) {
+      console.error('Errore nel ricaricamento dei trade:', error);
+    }
+  };
+  // Gestisce il cambio di tab e ricarica i dati se necessario
+  const handleTabChange = async (newTab: ActiveTab) => {
+    setActiveTab(newTab);
+    
+    // Ricarica i dati quando si va su Dashboard, Trades o Analysis
+    if (newTab === "Dashboard" || newTab === "Trades" || newTab === "Analysis") {
+      await reloadTrades();
     }
   };
 
@@ -178,13 +193,11 @@ function App() {
         newTrade.stopLoss,
         newTrade.takeProfit
       );
-    }
-
-    // Salva il trade direttamente nel file configurato
+    }    // Salva il trade direttamente nel file configurato
     setUserTrades((prevTrades: Trade[]) => [...prevTrades, newTrade]);
     setIsAddTradeModalOpen(false);
 
-    // Il salvataggio automatico avviene tramite useEffect
+    // Il salvataggio automatico avviene tramite useEffect, non è necessario ricaricare
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,7 +221,7 @@ function App() {
           }));          return [...currentRealTrades, ...tradesWithNewIds];
         });
 
-        // Il salvataggio automatico avviene tramite useEffect
+        // Il salvataggio automatico avviene tramite useEffect, non è necessario ricaricare
         alert(`Successfully imported ${newTrades.length} trades!`);
       }
     };
@@ -263,15 +276,15 @@ function App() {
       // Il salvataggio automatico avviene tramite useEffect
       return updatedTrades;
     });
-  };const handleCellBlur = () => {
+  };const handleCellBlur = async () => {
     setEditingCell(null);
-    // Il salvataggio automatico avviene tramite useEffect
+    // Il salvataggio automatico avviene tramite useEffect, non ricaricariamo per evitare lampeggiamenti
   };
 
-  const handleCellKeyDown = (e: React.KeyboardEvent) => {
+  const handleCellKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setEditingCell(null);
-      // Il salvataggio automatico avviene tramite useEffect
+      // Il salvataggio automatico avviene tramite useEffect, non ricaricariamo per evitare lampeggiamenti
     } else if (e.key === 'Escape') {
       setEditingCell(null);
     }
@@ -330,8 +343,7 @@ function App() {
       default:
         return <Dashboard trades={allTrades} />;
     }
-  };
-  // Carica i trade dal file al primo avvio
+  };  // Carica i trade dal file al primo avvio
   useEffect(() => {
     const loadTrades = async () => {
       try {
@@ -344,9 +356,7 @@ function App() {
       } catch (error) {
         console.error('Errore nel caricamento dei trade:', error);
       }
-    };
-
-    loadTrades();
+    };    loadTrades();
   }, [filePath, destinationPath, tradeFields]);
 
   // Salva automaticamente quando cambiano i trade (solo se non sono demo trade)
@@ -354,15 +364,13 @@ function App() {
     if (userTrades.length > 0) {
       saveTradesDirectly(userTrades, tradeFields, filePath, destinationPath);
     }
-  }, [userTrades, filePath, destinationPath, tradeFields]);
-
-  return (
+  }, [userTrades, filePath, destinationPath, tradeFields]);  return (
     <div className="app">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Header activeTab={activeTab} setActiveTab={handleTabChange} />
       
       <main className="main">
         {renderMainContent()}
-      </main>      <AddTradeModal
+      </main><AddTradeModal
         isOpen={isAddTradeModalOpen}
         tradeFields={tradeFields}
         onClose={() => setIsAddTradeModalOpen(false)}
