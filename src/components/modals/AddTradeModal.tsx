@@ -91,9 +91,8 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
     
     onSubmit(tradeData);
   };
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay add-trade-modal" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Add New Trade</h3>

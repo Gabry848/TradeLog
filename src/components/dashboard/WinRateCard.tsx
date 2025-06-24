@@ -9,8 +9,7 @@ interface WinRateCardProps {
 
 const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
   const stats = calculateDetailedWinRateStats(trades);
-
-  // Genera un grafico del win rate nel tempo
+  // Genera un grafico del win rate nel tempo basato sui trade reali
   const generateWinRateChart = () => {
     if (stats.totalTrades === 0) return '';
     
@@ -18,15 +17,38 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
     const width = 180;
     const height = 50;
     const padding = 10;
+      // Ordina i trade per data per calcolare il win rate progressivo
+    const sortedTrades = [...trades]
+      .filter(trade => trade.status === 'Closed')
+      .sort((a, b) => new Date(a.exitDate || a.entryDate).getTime() - new Date(b.exitDate || b.entryDate).getTime());
     
-    // Simula la progressione del win rate nel tempo
-    for (let i = 0; i <= 10; i++) {
-      const x = padding + (i * (width - 2 * padding)) / 10;
-      // Simula una progressione verso il win rate finale
-      const progress = i / 10;
-      const currentWinRate = stats.winRate * progress + (Math.random() - 0.5) * 10;
-      const y = height - padding - ((Math.max(0, Math.min(100, currentWinRate)) / 100) * (height - 2 * padding));
-      points.push(`${x},${y}`);
+    if (sortedTrades.length === 0) {
+      // Se non ci sono trade chiusi, mostra una linea piatta al 50%
+      const y = height - padding - ((50 / 100) * (height - 2 * padding));
+      for (let i = 0; i <= 10; i++) {
+        const x = padding + (i * (width - 2 * padding)) / 10;
+        points.push(`${x},${y}`);
+      }
+      return points.join(' ');
+    }
+    
+    // Calcola il win rate progressivo per punti lungo la timeline
+    const numPoints = Math.min(11, sortedTrades.length + 1);
+    for (let i = 0; i < numPoints; i++) {
+      const x = padding + (i * (width - 2 * padding)) / (numPoints - 1);
+      
+      if (i === 0) {
+        // Punto iniziale al 50%
+        const y = height - padding - ((50 / 100) * (height - 2 * padding));
+        points.push(`${x},${y}`);
+      } else {
+        // Calcola il win rate fino al trade i-esimo
+        const tradesUpToIndex = sortedTrades.slice(0, i);
+        const wins = tradesUpToIndex.filter(trade => (trade.pnl || 0) > 0).length;
+        const winRate = (wins / tradesUpToIndex.length) * 100;
+        const y = height - padding - ((winRate / 100) * (height - 2 * padding));
+        points.push(`${x},${y}`);
+      }
     }
     
     return points.join(' ');

@@ -46,7 +46,6 @@ function createWindow() {
       preloadPath = preloadJs;
     }
   }
-
   win = new BrowserWindow({
     title: 'TradeLog - Trading Journal',
     icon: path.join(process.env.VITE_PUBLIC!, 'TradeLog.ico'),
@@ -54,11 +53,44 @@ function createWindow() {
       preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
+      zoomFactor: 1.0, // Fattore di zoom iniziale
     },
   })
-
   // Rimuovi il menu predefinito
   win.setMenuBarVisibility(false)
+  // Gestori per il controllo dello zoom
+  // Zoom in con Ctrl++
+  win.webContents.on('before-input-event', (_, input) => {
+    if (input.control && input.key === '=') { // = è il tasto per +
+      const currentZoom = win?.webContents.getZoomFactor() || 1.0
+      const newZoom = Math.min(currentZoom + 0.1, 3.0) // Massimo 300%
+      win?.webContents.setZoomFactor(newZoom)
+    }
+    // Zoom out con Ctrl+-
+    else if (input.control && input.key === '-') {
+      const currentZoom = win?.webContents.getZoomFactor() || 1.0
+      const newZoom = Math.max(currentZoom - 0.1, 0.3) // Minimo 30%
+      win?.webContents.setZoomFactor(newZoom)
+    }
+    // Reset zoom con Ctrl+0
+    else if (input.control && input.key === '0') {
+      win?.webContents.setZoomFactor(1.0)
+    }
+  })
+
+  // Abilitare il zoom con Ctrl + rotellina del mouse
+  win.webContents.on('zoom-changed', (_, zoomDirection) => {
+    const currentZoom = win?.webContents.getZoomFactor() || 1.0
+    let newZoom = currentZoom
+    
+    if (zoomDirection === 'in') {
+      newZoom = Math.min(currentZoom + 0.1, 3.0)
+    } else if (zoomDirection === 'out') {
+      newZoom = Math.max(currentZoom - 0.1, 0.3)
+    }
+    
+    win?.webContents.setZoomFactor(newZoom)
+  })
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

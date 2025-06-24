@@ -24,6 +24,42 @@
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   animation: modalSlideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Specific styles for AddTradeModal scrolling */
+.add-trade-modal .modal-content {
+  max-height: 85vh;
+}
+
+.add-trade-modal .trade-form {
+  max-height: calc(85vh - 140px); /* Account for header and form actions */
+  overflow-y: auto;
+}
+
+.add-trade-modal .form-grid {
+  padding-right: 8px; /* Space for scrollbar */
+}
+
+/* Custom scrollbar for modal content */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: rgba(42, 45, 53, 0.3);
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #646cff;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #5a5fcf;
 }
 
 @keyframes modalSlideIn {
@@ -86,6 +122,29 @@
 /* Trade Form */
 .trade-form {
   padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Important for flex scrolling */
+}
+
+/* Custom scrollbar for trade form */
+.trade-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.trade-form::-webkit-scrollbar-track {
+  background: rgba(42, 45, 53, 0.2);
+  border-radius: 3px;
+}
+
+.trade-form::-webkit-scrollbar-thumb {
+  background: rgba(100, 108, 255, 0.6);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.trade-form::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 108, 255, 0.8);
 }
 
 .form-grid {
@@ -93,6 +152,7 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+  padding-bottom: 1rem; /* Space for scrolling */
 }
 
 .form-group {
@@ -579,4 +639,92 @@
   .field-modal .field-form::-webkit-scrollbar {
     width: 4px;
   }
+}
+
+/* Responsive styles for better scrolling on mobile */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+  
+  .modal-content {
+    max-height: calc(100vh - 4rem);
+    min-height: 400px;
+    width: 100%;
+    margin: 0;
+  }
+  
+  .trade-form {
+    padding: 1rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .form-actions {
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    position: sticky;
+    bottom: 0;
+    background-color: #1e2025;
+    border-top: 1px solid #3a3d45;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .trade-form {
+    max-height: calc(95vh - 120px);
+  }
+}
+
+/* Ensure smooth scrolling for all browsers */
+.modal-content,
+.trade-form {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for Firefox */
+.modal-content,
+.trade-form {
+  scrollbar-width: thin;
+  scrollbar-color: #646cff rgba(42, 45, 53, 0.3);
+}
+
+/* Force scrollbar visibility when content overflows */
+.scrollable-form {
+  overflow-y: scroll !important;
+  max-height: 60vh;
+}
+
+.scrollable-form::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-form::-webkit-scrollbar-track {
+  background: rgba(42, 45, 53, 0.3);
+  border-radius: 4px;
+}
+
+.scrollable-form::-webkit-scrollbar-thumb {
+  background: #646cff;
+  border-radius: 4px;
+}
+
+.scrollable-form::-webkit-scrollbar-thumb:hover {
+  background: #5a5fcf;
 }

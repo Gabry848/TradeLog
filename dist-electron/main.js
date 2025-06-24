@@ -29,18 +29,37 @@ function createWindow() {
     webPreferences: {
       preload: preloadPath,
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      zoomFactor: 1
+      // Fattore di zoom iniziale
     }
   });
   win.setMenuBarVisibility(false);
+  win.webContents.on("before-input-event", (_, input) => {
+    if (input.control && input.key === "=") {
+      const currentZoom = (win == null ? void 0 : win.webContents.getZoomFactor()) || 1;
+      const newZoom = Math.min(currentZoom + 0.1, 3);
+      win == null ? void 0 : win.webContents.setZoomFactor(newZoom);
+    } else if (input.control && input.key === "-") {
+      const currentZoom = (win == null ? void 0 : win.webContents.getZoomFactor()) || 1;
+      const newZoom = Math.max(currentZoom - 0.1, 0.3);
+      win == null ? void 0 : win.webContents.setZoomFactor(newZoom);
+    } else if (input.control && input.key === "0") {
+      win == null ? void 0 : win.webContents.setZoomFactor(1);
+    }
+  });
+  win.webContents.on("zoom-changed", (_, zoomDirection) => {
+    const currentZoom = (win == null ? void 0 : win.webContents.getZoomFactor()) || 1;
+    let newZoom = currentZoom;
+    if (zoomDirection === "in") {
+      newZoom = Math.min(currentZoom + 0.1, 3);
+    } else if (zoomDirection === "out") {
+      newZoom = Math.max(currentZoom - 0.1, 0.3);
+    }
+    win == null ? void 0 : win.webContents.setZoomFactor(newZoom);
+  });
   win.webContents.on("did-finish-load", () => {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  win.on("focus", () => {
-    win == null ? void 0 : win.webContents.send("window-focused");
-  });
-  win.on("blur", () => {
-    win == null ? void 0 : win.webContents.send("window-blurred");
   });
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
