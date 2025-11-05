@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { formatPnL, formatPercentage } from '../../utils/formatters';
 
 interface MetricCardProps {
@@ -8,18 +8,18 @@ interface MetricCardProps {
   showChart?: boolean;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ 
-  title, 
-  value, 
-  isPercentage = false, 
-  showChart = false 
+const MetricCard: React.FC<MetricCardProps> = ({
+  title,
+  value,
+  isPercentage = false,
+  showChart = false
 }) => {
-  // Genera un grafico dinamico basato sul valore
-  const generateMiniChart = () => {
+  // Memoize chart generation
+  const chartData = useMemo(() => {
     const points: string[] = [];
     const baseY = 30;
     const amplitude = 15;
-    
+
     for (let i = 0; i <= 10; i++) {
       const x = i * 18 + 10;
       // Simula un trend basato sul valore
@@ -29,11 +29,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
       const y = baseY - trendEffect + randomVariation;
       points.push(`${x},${Math.max(5, Math.min(55, y))}`);
     }
-    
-    return points.join(' ');
-  };
 
-  const chartColor = value >= 0 ? '#10b981' : '#ef4444';
+    return {
+      points: points.join(' '),
+      color: value >= 0 ? '#10b981' : '#ef4444'
+    };
+  }, [value]);
 
   return (
     <div className="metric-card">
@@ -46,29 +47,30 @@ const MetricCard: React.FC<MetricCardProps> = ({
           <svg className="equity-chart" viewBox="0 0 200 60">
             <defs>
               <linearGradient id={`miniGradient-${title.replace(/\s+/g, '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor={chartColor} stopOpacity="0.3" />
-                <stop offset="100%" stopColor={chartColor} stopOpacity="0" />
+                <stop offset="0%" stopColor={chartData.color} stopOpacity="0.3" />
+                <stop offset="100%" stopColor={chartData.color} stopOpacity="0" />
               </linearGradient>
             </defs>
-            
+
             {/* Area sotto la curva */}
             <polygon
-              points={`10,55 ${generateMiniChart()} 190,55`}
+              points={`10,55 ${chartData.points} 190,55`}
               fill={`url(#miniGradient-${title.replace(/\s+/g, '')})`}
             />
-            
+
             {/* Linea principale */}
             <polyline
-              points={generateMiniChart()}
+              points={chartData.points}
               fill="none"
-              stroke={chartColor}
+              stroke={chartData.color}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ transition: 'stroke 0.3s ease' }}
             />
-            
+
             {/* Punti sulla linea */}
-            {generateMiniChart().split(' ').map((point, index) => {
+            {chartData.points.split(' ').map((point, index) => {
               const [x, y] = point.split(',').map(Number);
               return (
                 <circle
@@ -76,8 +78,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
                   cx={x}
                   cy={y}
                   r="1.5"
-                  fill={chartColor}
+                  fill={chartData.color}
                   opacity="0.8"
+                  style={{ transition: 'all 0.3s ease' }}
                 />
               );
             })}
@@ -88,4 +91,4 @@ const MetricCard: React.FC<MetricCardProps> = ({
   );
 };
 
-export default MetricCard;
+export default React.memo(MetricCard);

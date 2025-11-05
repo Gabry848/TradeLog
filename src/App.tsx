@@ -519,6 +519,8 @@ function App() {
     }
   }, [globalFolder, destinationPath, setDestinationPath, updateGlobalFolder]);
   // Salva automaticamente quando cambiano i trade (ottimizzato con debounce logico)
+  // Usa solo userTrades, filePath, destinationPath come dipendenze
+  // tradeFields viene passato al momento del salvataggio ma non è una dipendenza
   useEffect(() => {
     if (userTrades.length > 0) {
       const timeoutId = setTimeout(() => {
@@ -527,7 +529,8 @@ function App() {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [userTrades, filePath, destinationPath, tradeFields]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userTrades, filePath, destinationPath]);
 
 
   return (

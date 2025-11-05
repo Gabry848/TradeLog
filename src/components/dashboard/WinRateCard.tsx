@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Trade } from '../../types';
 import { calculateDetailedWinRateStats } from '../../utils/chartUtils';
 import { formatPercentage } from '../../utils/formatters';
@@ -8,11 +8,13 @@ interface WinRateCardProps {
 }
 
 const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
-  const stats = calculateDetailedWinRateStats(trades);
-  // Genera un grafico del win rate nel tempo basato sui trade reali
-  const generateWinRateChart = () => {
-    if (stats.totalTrades === 0) return '';
-    
+  // Memoize stats calculation
+  const stats = useMemo(() => calculateDetailedWinRateStats(trades), [trades]);
+
+  // Memoize chart generation
+  const chartData = useMemo(() => {
+    if (stats.totalTrades === 0) return { points: '', color: '#10b981' };
+
     const points: string[] = [];
     const width = 180;
     const height = 50;
@@ -21,7 +23,7 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
     const sortedTrades = [...trades]
       .filter(trade => trade.status === 'Closed')
       .sort((a, b) => new Date(a.exitDate || a.entryDate).getTime() - new Date(b.exitDate || b.entryDate).getTime());
-    
+
     if (sortedTrades.length === 0) {
       // Se non ci sono trade chiusi, mostra una linea piatta al 50%
       const y = height - padding - ((50 / 100) * (height - 2 * padding));
@@ -29,14 +31,17 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
         const x = padding + (i * (width - 2 * padding)) / 10;
         points.push(`${x},${y}`);
       }
-      return points.join(' ');
+      return {
+        points: points.join(' '),
+        color: stats.winRate >= 50 ? '#10b981' : stats.winRate >= 40 ? '#f59e0b' : '#ef4444'
+      };
     }
-    
+
     // Calcola il win rate progressivo per punti lungo la timeline
     const numPoints = Math.min(11, sortedTrades.length + 1);
     for (let i = 0; i < numPoints; i++) {
       const x = padding + (i * (width - 2 * padding)) / (numPoints - 1);
-      
+
       if (i === 0) {
         // Punto iniziale al 50%
         const y = height - padding - ((50 / 100) * (height - 2 * padding));
@@ -50,16 +55,16 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
         points.push(`${x},${y}`);
       }
     }
-    
-    return points.join(' ');
-  };
 
-  const winRateColor = stats.winRate >= 50 ? '#10b981' : stats.winRate >= 40 ? '#f59e0b' : '#ef4444';
-  const chartPoints = generateWinRateChart();
+    return {
+      points: points.join(' '),
+      color: stats.winRate >= 50 ? '#10b981' : stats.winRate >= 40 ? '#f59e0b' : '#ef4444'
+    };
+  }, [trades, stats]);
   return (
     <div className="win-rate-card">
       <h3>Win Rate</h3>
-      
+
       <div className="win-rate-content">
         <div className={`win-rate-value ${stats.winRate >= 50 ? 'positive' : stats.winRate >= 40 ? 'neutral' : 'negative'}`}>
           {formatPercentage(stats.winRate, 1)}
@@ -70,19 +75,19 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
             <svg viewBox="0 0 200 60" className="chart-svg">
               <defs>
                 <linearGradient id="winRateGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={winRateColor} stopOpacity="0.3" />
-                  <stop offset="100%" stopColor={winRateColor} stopOpacity="0" />
+                  <stop offset="0%" stopColor={chartData.color} stopOpacity="0.3" />
+                  <stop offset="100%" stopColor={chartData.color} stopOpacity="0" />
                 </linearGradient>
               </defs>
-              
+
               {/* Area sotto la curva */}
-              {chartPoints && (
+              {chartData.points && (
                 <polygon
-                  points={`10,55 ${chartPoints} 190,55`}
+                  points={`10,55 ${chartData.points} 190,55`}
                   fill="url(#winRateGradient)"
                 />
               )}
-              
+
               {/* Linea del 50% (break-even) */}
               <line
                 x1="10"
@@ -94,21 +99,22 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
                 strokeDasharray="3,3"
                 opacity="0.5"
               />
-              
+
               {/* Linea principale */}
-              {chartPoints && (
+              {chartData.points && (
                 <polyline
-                  points={chartPoints}
+                  points={chartData.points}
                   fill="none"
-                  stroke={winRateColor}
+                  stroke={chartData.color}
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  style={{ transition: 'stroke 0.3s ease' }}
                 />
               )}
-              
+
               {/* Punti sulla linea */}
-              {chartPoints && chartPoints.split(' ').slice(-1).map((point, index) => {
+              {chartData.points && chartData.points.split(' ').slice(-1).map((point, index) => {
                 const [x, y] = point.split(',').map(Number);
                 return (
                   <circle
@@ -116,9 +122,10 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
                     cx={x}
                     cy={y}
                     r="3"
-                    fill={winRateColor}
+                    fill={chartData.color}
                     stroke="white"
                     strokeWidth="1"
+                    style={{ transition: 'all 0.3s ease' }}
                   />
                 );
               })}            </svg>
@@ -135,4 +142,4 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
   );
 };
 
-export default WinRateCard;
+export default React.memo(WinRateCard);

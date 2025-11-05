@@ -1,6 +1,49 @@
 import { Trade, TradeField } from '../types';
 import { initializeTradeFields } from './tradeUtils';
 
+// Helper function to escape CSV values
+const escapeCSVValue = (value: string | number): string => {
+  const strValue = String(value);
+  // If value contains comma, quote, or newline, wrap in quotes and escape quotes
+  if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
+    return `"${strValue.replace(/"/g, '""')}"`;
+  }
+  return strValue;
+};
+
+// Helper function to parse CSV line properly handling quotes
+const parseCSVLine = (line: string): string[] => {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote mode
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  // Add last field
+  result.push(current.trim());
+  return result;
+};
+
 export const exportToCSV = async (
   trades: Trade[],
   tradeFields: TradeField[],
@@ -14,13 +57,13 @@ export const exportToCSV = async (
   const headers = tradeFields.filter(field => field.enabled).map(field => field.label);
 
   const csvContent = [
-    headers.join(","),
+    headers.map(h => escapeCSVValue(h)).join(","),
     ...trades.map(trade =>
       tradeFields
         .filter(field => field.enabled)
         .map(field => {
           const value = trade[field.id] ?? (field.type === 'number' ? '0' : '');
-          return String(value);
+          return escapeCSVValue(value);
         })
         .join(",")
     )
@@ -58,12 +101,13 @@ export const importFromCSV = (
   const lines = text.split("\n").filter(line => line.trim());
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map(h => h.trim());
+  const headers = parseCSVLine(lines[0]);
   const newTrades: Trade[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",").map(v => v.trim());
-    if (values.length < 3) continue;    // Crea un trade base con i campi obbligatori
+    const values = parseCSVLine(lines[i]);
+    // Skip empty lines or lines with no meaningful data
+    if (values.length === 0 || values.every(v => !v)) continue;    // Crea un trade base con i campi obbligatori
     const trade: Trade = {
       id: Date.now() + i,
       entryDate: new Date().toISOString().split('T')[0],
