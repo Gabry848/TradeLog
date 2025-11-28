@@ -1,0 +1,246 @@
+/* Trade Journal Styles */
+
+.trade-journal {
+  width: 100%;
+  margin-top: 1rem;
+  background: #1f2937;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.journal-tabs {
+  display: flex;
+  border-bottom: 1px solid #374151;
+  background: #111827;
+}
+
+.journal-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.journal-tab:hover {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+.journal-tab.active {
+  background: #1f2937;
+  color: #10b981;
+  border-bottom: 2px solid #10b981;
+}
+
+.journal-content {
+  padding: 1.5rem;
+}
+
+.journal-section {
+  margin-bottom: 1.5rem;
+}
+
+.journal-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #f3f4f6;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.journal-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.journal-textarea:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.journal-textarea::placeholder {
+  color: #6b7280;
+}
+
+.journal-prompts {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #111827;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+}
+
+.journal-prompts small {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.journal-prompts ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  color: #d1d5db;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.journal-prompts li {
+  margin-bottom: 0.25rem;
+}
+
+/* Mood Tracker Styles */
+
+.mood-tracker {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #374151;
+}
+
+.mood-label {
+  display: block;
+  margin-bottom: 1rem;
+  color: #f3f4f6;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+.mood-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  background: #111827;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mood-button:hover {
+  transform: translateY(-2px);
+  border-color: #374151;
+}
+
+.mood-button.selected {
+  transform: scale(1.05);
+}
+
+.mood-emoji {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.mood-name {
+  color: #d1d5db;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.mood-button.selected .mood-name {
+  color: #f3f4f6;
+  font-weight: 600;
+}
+
+/* Screenshots Section */
+
+.screenshots-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #374151;
+}
+
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.screenshot-item {
+  position: relative;
+  aspect-ratio: 4/3;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.screenshot-item:hover {
+  transform: scale(1.02);
+  border-color: #10b981;
+}
+
+.screenshot-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-screenshot {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  background: rgba(239, 68, 68, 0.9);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.screenshot-item:hover .remove-screenshot {
+  opacity: 1;
+}
+
+.remove-screenshot:hover {
+  background: #dc2626;
+}
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #3b82f6;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.upload-button:hover {
+  background: #2563eb;
+}
+
+.upload-button:active {
+  transform: scale(0.98);
+}

@@ -430,7 +430,7 @@ function App() {
     setIsAddTradeModalOpen(false);
   }, []);
   const renderMainContent = () => {
-    console.log("renderMainConten called with activeTab:", activeTab);
+    console.log("renderMainContent called with activeTab:", activeTab);
 
     switch (activeTab) {
       case "Dashboard":
