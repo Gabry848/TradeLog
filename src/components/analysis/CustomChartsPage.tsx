@@ -3,6 +3,7 @@ import { CustomChartScript, Trade } from '../../types';
 import { executeChartScript } from '../../utils/chartScriptUtils';
 import CustomChartViewer from './CustomChartViewer';
 import ChartScriptEditor from './ChartScriptEditor';
+import chartTemplates from '../../data/chartTemplates';
 
 interface CustomChartsPageProps {
   trades: Trade[];
@@ -20,7 +21,10 @@ const CustomChartsPage: React.FC<CustomChartsPageProps> = ({
   
   const [selectedScript, setSelectedScript] = useState<CustomChartScript | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingScript, setEditingScript] = useState<CustomChartScript | undefined>();  const handleSaveScript = (script: CustomChartScript) => {
+  const [editingScript, setEditingScript] = useState<CustomChartScript | undefined>();
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const handleSaveScript = (script: CustomChartScript) => {
     console.log('Saving script:', script.name);
     const existingIndex = customScripts.findIndex(s => s.id === script.id);
     
@@ -52,6 +56,30 @@ const CustomChartsPage: React.FC<CustomChartsPageProps> = ({
       script.id === scriptId ? { ...script, enabled: !script.enabled } : script
     );
     onUpdateScripts(updated);
+  };
+
+  const handleImportTemplate = (template: CustomChartScript) => {
+    // Crea una copia del template con un nuovo ID
+    const newScript: CustomChartScript = {
+      ...template,
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Controlla se esiste già uno script con lo stesso nome
+    const existingScript = customScripts.find(s => s.name === template.name);
+    if (existingScript) {
+      if (!confirm(`Esiste già uno script chiamato "${template.name}". Vuoi importare comunque?`)) {
+        return;
+      }
+      newScript.name = `${template.name} (Copy)`;
+    }
+
+    onUpdateScripts([...customScripts, newScript]);
+    setSelectedScript(newScript);
+    setShowTemplates(false);
+    alert(`Template "${template.name}" importato con successo!`);
   };
 
   const executeSelectedScript = () => {
@@ -94,13 +122,120 @@ const CustomChartsPage: React.FC<CustomChartsPageProps> = ({
     <div className="custom-charts-page">
       <div className="custom-charts-header">
         <h2>Grafici Personalizzati</h2>
-        <button
-          onClick={() => setIsEditing(true)}
-          className="btn-primary"
-        >
-          + Nuovo Script
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            onClick={() => setShowTemplates(!showTemplates)}
+            className="btn-secondary"
+            style={{
+              background: showTemplates ? '#3b82f6' : '#374151',
+              color: 'white'
+            }}
+          >
+            📚 Template Store ({chartTemplates.length})
+          </button>
+          <button
+            onClick={() => setIsEditing(true)}
+            className="btn-primary"
+          >
+            + Nuovo Script
+          </button>
+        </div>
       </div>
+
+      {showTemplates && (
+        <div className="templates-store" style={{
+          background: '#1f2937',
+          padding: '1.5rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          border: '2px solid #3b82f6'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>📊 Template Store - Grafici Pronti all'Uso</h3>
+            <button
+              onClick={() => setShowTemplates(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#9ca3af',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: '0.25rem 0.5rem'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ color: '#9ca3af', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+            Clicca su "Importa" per aggiungere un template alla tua collezione. Potrai poi personalizzarlo a piacimento.
+          </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '1rem'
+          }}>
+            {chartTemplates.map(template => (
+              <div
+                key={template.id}
+                style={{
+                  background: '#111827',
+                  padding: '1rem',
+                  borderRadius: '6px',
+                  border: '1px solid #374151',
+                  transition: 'border-color 0.2s'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#374151')}
+              >
+                <h4 style={{ marginTop: 0, color: '#f3f4f6' }}>{template.name}</h4>
+                <p style={{ color: '#9ca3af', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                  {template.description}
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <span style={{
+                    padding: '0.25rem 0.5rem',
+                    background: '#374151',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    color: '#d1d5db'
+                  }}>
+                    {template.chartType}
+                  </span>
+                  {template.parameters.length > 0 && (
+                    <span style={{
+                      padding: '0.25rem 0.5rem',
+                      background: '#374151',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      color: '#d1d5db'
+                    }}>
+                      {template.parameters.length} parametri
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleImportTemplate(template)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    background: '#3b82f6',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: 'white',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#2563eb')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#3b82f6')}
+                >
+                  ⬇️ Importa Template
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="custom-charts-content">        <div className="scripts-sidebar">
           <h3>Script Disponibili</h3>

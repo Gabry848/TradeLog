@@ -20,10 +20,16 @@ export interface Trade {
   hitProfitTarget?: boolean;
   actualEntryPrice?: number;
   actualExitPrice?: number;
+  // Journal e note
+  preTradeNotes?: string; // Note e analisi prima dell'entrata
+  postTradeNotes?: string; // Riflessioni dopo la chiusura
+  screenshots?: string[]; // Array di base64 o URL di immagini
+  mood?: "confident" | "uncertain" | "fearful" | "greedy" | "neutral" | "disciplined";
+  tags?: string[]; // Tag personalizzati per categorizzare
   // Campi legacy per compatibilità
   date: string;
   price: number;
-  [key: string]: string | number | boolean | undefined; // Per supportare campi dinamici
+  [key: string]: string | number | boolean | undefined | string[]; // Per supportare campi dinamici
 }
 
 export type SortField = "entryDate" | "exitDate" | "symbol" | "type" | "qty" | "entryPrice" | "exitPrice" | "targetProfit" | "maxLoss" | "pnl" | "fees" | "status" | "hitProfitTarget" | "actualEntryPrice" | "actualExitPrice" | "date" | "price";

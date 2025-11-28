@@ -1,0 +1,93 @@
+/* Chart Tooltip Styles */
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: auto;
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-content {
+  background: rgba(17, 24, 39, 0.98);
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  min-width: 180px;
+}
+
+.tooltip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+}
+
+.tooltip-item:not(:last-child) {
+  border-bottom: 1px solid #374151;
+}
+
+.tooltip-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tooltip-label {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.tooltip-value {
+  color: #f3f4f6;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.tooltip-view-trade {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #3b82f6;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tooltip-view-trade:hover {
+  background: #2563eb;
+}
+
+/* Interactive chart elements */
+
+.chart-point-interactive {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-point-interactive:hover {
+  transform: scale(1.3);
+  filter: brightness(1.3);
+}
+
+.chart-area-interactive {
+  cursor: crosshair;
+}

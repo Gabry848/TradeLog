@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Trade } from '../../types';
 import { generateEquityCurveData } from '../../utils/chartUtils';
+import ChartTooltip from './ChartTooltip';
+import '../../styles/tooltip.css';
 
 interface EquityChartProps {
   trades: Trade[];
@@ -8,6 +10,14 @@ interface EquityChartProps {
 
 const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
   const equityData = generateEquityCurveData(trades);
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    data: [] as { label: string; value: string | number; color?: string }[],
+    tradeId: undefined as number | undefined,
+  });
+  const svgRef = useRef<SVGSVGElement>(null);
   
   // Se non ci sono dati, mostra un messaggio
   if (equityData.length === 0) {
@@ -59,11 +69,44 @@ const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
   const isPositive = finalValue >= 0;
   const strokeColor = isPositive ? '#10b981' : '#ef4444';
 
+  // Trova il trade corrispondente per ogni punto
+  const closedTrades = trades.filter(t => t.status === 'Closed').sort(
+    (a, b) => new Date(a.exitDate || a.entryDate).getTime() - new Date(b.exitDate || b.entryDate).getTime()
+  );
+
+  const handlePointHover = (event: React.MouseEvent, point: typeof equityData[0], index: number) => {
+    const trade = closedTrades[index];
+    if (!trade) return;
+
+    setTooltip({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      data: [
+        { label: 'Date', value: trade.exitDate || trade.entryDate },
+        { label: 'Symbol', value: trade.symbol },
+        { label: 'P&L', value: `$${(trade.pnl || 0).toFixed(2)}`, color: trade.pnl >= 0 ? '#10b981' : '#ef4444' },
+        { label: 'Cumulative', value: `$${(point.value || 0).toFixed(2)}`, color: strokeColor },
+      ],
+      tradeId: trade.id,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip(prev => ({ ...prev, visible: false }));
+  };
+
+  const handleTradeClick = (tradeId: number) => {
+    // Qui potresti aprire un modal con i dettagli del trade
+    console.log('View trade:', tradeId);
+    // TODO: Implementare navigazione ai dettagli del trade
+  };
+
   return (
     <div className="equity-section">
       <h3>Equity Curve</h3>
       <div className="equity-chart-large">
-        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
+        <svg ref={svgRef} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="chart-area-interactive">
           <defs>
             <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor={strokeColor} stopOpacity="0.3" />
@@ -125,9 +168,14 @@ const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
                 key={index}
                 cx={x}
                 cy={y}
-                r="3"
+                r="5"
                 fill={strokeColor}
                 opacity="0.8"
+                className="chart-point-interactive"
+                onMouseEnter={(e) => handlePointHover(e, point, index)}
+                onMouseMove={(e) => handlePointHover(e, point, index)}
+                onMouseLeave={handleMouseLeave}
+                style={{ cursor: 'pointer' }}
               />
             );
           })}
@@ -149,6 +197,15 @@ const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
           </span></div>
           <div>Trades: {equityData.length}</div>
         </div>
+
+        <ChartTooltip
+          x={tooltip.x}
+          y={tooltip.y}
+          visible={tooltip.visible}
+          data={tooltip.data}
+          tradeId={tooltip.tradeId}
+          onTradeClick={handleTradeClick}
+        />
       </div>
     </div>
   );

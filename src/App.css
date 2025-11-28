@@ -6,6 +6,8 @@
 @import './styles/modal.css';
 @import './styles/settings.css';
 @import './styles/fields.css';
+@import './styles/journal.css';
+@import './styles/tooltip.css';
 
 /* Global Scrollbar Styles */
 /* Per browser Webkit (Chrome, Safari, Edge) */

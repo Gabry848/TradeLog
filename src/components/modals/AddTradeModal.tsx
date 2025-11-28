@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TradeField, NewTradeData, Trade } from '../../types';
 import { calculateAllFields } from '../../utils/calculatedFields';
+import TradeJournal from '../journal/TradeJournal';
 import '../../styles/modal.css';
 
 interface AddTradeModalProps {
@@ -17,6 +18,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
   onSubmit,
 }) => {  const [formData, setFormData] = useState<Partial<Trade>>({});
   const [calculatedValues, setCalculatedValues] = useState<Record<string, number | string>>({});
+  const [preTradeNotes, setPreTradeNotes] = useState<string>('');
+  const [postTradeNotes, setPostTradeNotes] = useState<string>('');
+  const [mood, setMood] = useState<"confident" | "uncertain" | "fearful" | "greedy" | "neutral" | "disciplined" | undefined>();
+  const [screenshots, setScreenshots] = useState<string[]>([]);
 
   // Inizializza i valori predefiniti
   useEffect(() => {
@@ -88,8 +93,17 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
     Object.entries(calculatedValues).forEach(([fieldId, value]) => {
       (tradeData as unknown as Record<string, string | number | null>)[fieldId] = String(value);
     });
-    
-    onSubmit(tradeData);
+
+    // Aggiungi i dati del journal
+    const tradeWithJournal = {
+      ...tradeData,
+      preTradeNotes: preTradeNotes || null,
+      postTradeNotes: postTradeNotes || null,
+      mood: mood || null,
+      screenshots: screenshots.length > 0 ? JSON.stringify(screenshots) : null,
+    };
+
+    onSubmit(tradeWithJournal as NewTradeData);
   };
   return (
     <div className="modal-overlay add-trade-modal" onClick={onClose}>
@@ -173,6 +187,19 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 </div>
               ))}
           </div>
+
+          <TradeJournal
+            preTradeNotes={preTradeNotes}
+            postTradeNotes={postTradeNotes}
+            mood={mood}
+            screenshots={screenshots}
+            onPreTradeNotesChange={setPreTradeNotes}
+            onPostTradeNotesChange={setPostTradeNotes}
+            onMoodChange={setMood}
+            onScreenshotsChange={setScreenshots}
+            isClosedTrade={formData.status === 'Closed'}
+          />
+
           <div className="form-actions">
             <button type="button" onClick={onClose} className="cancel-btn">
               Cancel
