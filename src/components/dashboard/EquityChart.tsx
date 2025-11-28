@@ -44,7 +44,10 @@ const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
   const chartHeight = svgHeight - 2 * padding;
   
   const points = equityData.map((point, index) => {
-    const x = padding + (index / (equityData.length - 1)) * chartWidth;
+    // Evita divisione per zero quando c'è solo un trade
+    const x = equityData.length === 1
+      ? padding + chartWidth / 2
+      : padding + (index / (equityData.length - 1)) * chartWidth;
     const y = padding + chartHeight - (((point.value || 0) - minValue) / range) * chartHeight;
     return `${x},${y}`;
   }).join(' ');
@@ -112,7 +115,10 @@ const EquityChart: React.FC<EquityChartProps> = ({ trades }) => {
           
           {/* Punti sulla linea */}
           {equityData.map((point, index) => {
-            const x = padding + (index / (equityData.length - 1)) * chartWidth;
+            // Evita divisione per zero quando c'è solo un trade
+            const x = equityData.length === 1
+              ? padding + chartWidth / 2
+              : padding + (index / (equityData.length - 1)) * chartWidth;
             const y = padding + chartHeight - (((point.value || 0) - minValue) / range) * chartHeight;
             return (
               <circle

@@ -108,7 +108,7 @@ const WinRateCard: React.FC<WinRateCardProps> = ({ trades }) => {
               )}
               
               {/* Punti sulla linea */}
-              {chartPoints && chartPoints.split(' ').slice(-1).map((point, index) => {
+              {chartPoints && chartPoints.split(' ').map((point, index) => {
                 const [x, y] = point.split(',').map(Number);
                 return (
                   <circle
